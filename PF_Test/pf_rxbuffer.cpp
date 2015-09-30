@@ -1,13 +1,15 @@
 #include "pf_rxbuffer.h"
 
-pf_rxbuffer::pf_rxbuffer() : m_buffer(), m_available(), m_reserved(0)
+pf_rxbuffer::pf_rxbuffer(int i) : m_buffer(), m_available(), m_reserved(0)
 {
-
+    if (i > 0)
+    {
+        reserv(i);
+    }
 }
 
 retval_t pf_rxbuffer::acquire(QByteArray &out_data, unsigned long time)
 {
-    QMutexLocker locker(&m_mutex);
     if(m_available.tryAcquire(1, time))
     {
         out_data = m_buffer.dequeue();
@@ -20,7 +22,7 @@ retval_t pf_rxbuffer::acquire(QByteArray &out_data, unsigned long time)
 
 }
 
-retval_t pf_rxbuffer::add(QByteArray& in_data)
+retval_t pf_rxbuffer::add(const QByteArray& in_data)
 {
     QMutexLocker locker(&m_mutex);
 

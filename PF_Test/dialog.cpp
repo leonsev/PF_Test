@@ -101,7 +101,12 @@ Dialog::Dialog(QWidget *parent)
 //    connect(&thread, SIGNAL(error(QString)),
 //            this, SLOT(processError(QString)));
 //    connect(&thread, SIGNAL(timeout(QString)),
-//            this, SLOT(processTimeout(QString)));
+    //            this, SLOT(processTimeout(QString)));
+}
+
+Dialog::~Dialog()
+{
+    if(pf) {delete pf;}
 }
 
 void Dialog::openport()

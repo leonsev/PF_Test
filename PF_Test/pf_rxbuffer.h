@@ -14,10 +14,10 @@ class pf_rxbuffer
 {
 
 public:
-    pf_rxbuffer();
+    pf_rxbuffer(int i = 0);
 
     retval_t acquire(QByteArray &out_data, unsigned long time = ULONG_MAX);
-    retval_t add(QByteArray& in_data);
+    retval_t add(const QByteArray& in_data);
     retval_t reserv (int i = 1);
     retval_t dereserv (int i = 1);
     retval_t drop ();
