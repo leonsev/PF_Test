@@ -7,10 +7,13 @@ pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent)
     connect(this, SIGNAL(open_serial(QString, QString)),
             &tx, SLOT(open_serial(QString, QString)));
 
-    connect(this, SIGNAL(send_broadcast(QByteArray)),
-            &tx, SLOT(send_broadcast(QByteArray)));
+    connect(this, SIGNAL(send_broadcast(QByteArray, bool)),
+            &tx, SLOT(transmitt(QByteArray, bool)));
 
+    //TODO Can work in existing thread
     tx.moveToThread(&tr_tx);
+
+    tr_tx.setPriority(QThread::TimeCriticalPriority);
 
     tr_tx.start();
 }

@@ -21,7 +21,7 @@ public:
 
 signals:
     void open_serial(QString, QString);
-    void send_broadcast(QByteArray);
+    void send_broadcast(QByteArray, bool reply);
 
 public slots:
 

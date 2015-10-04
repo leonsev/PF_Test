@@ -51,7 +51,7 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
                 state = WAIT_START;
 
                 //Push useful data
-                QDebug(QtDebugMsg) << "A new message received:" << data.left(it);
+                //QDebug(QtDebugMsg) << "A new message received:" << data.left(it);
 
                 if(0 == pf_crc::get(data.left(it)))
                 {

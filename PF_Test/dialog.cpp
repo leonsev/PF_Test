@@ -129,9 +129,9 @@ void Dialog::openport()
 void Dialog::sendprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread() << "Data: ";
-    //pf->broadcast(data);
-    emit(pf_adapt.send_broadcast(data));
+    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
+
+    emit(pf_adapt.send_broadcast(data, false));
 }
 
 void Dialog::showResponse(const QString &s)

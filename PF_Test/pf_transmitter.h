@@ -18,14 +18,11 @@ signals:
 
 public slots:
     void open_serial(QString, QString);
-    void send_broadcast(QByteArray);
+    void transmitt(QByteArray, bool);
 
 private slots:
     void data_received();
     void timeout();
-
-private: //methods
-    void transmitt(QByteArray);
 
 private: //members
     QSerialPort* tx_port;
@@ -33,14 +30,22 @@ private: //members
     pf_receiver pf_rec;
     QByteArray current_request;
     QTimer *timer;
+    const int echo_timeout;
+    const int request_timeout;
 
     enum State_t
     {
         INIT = 0,
         READY,
-        WAIT_ECHO,
+        WAIT_ECHO_BROADCAST,
+        WAIT_ECHO_REQUEST,
+        WAIT_REPLY
 
     } state;
+
+private: //methods
+    void setState(State_t);
+    State_t getState(void) const;
 
 };
 
