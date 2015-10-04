@@ -42,10 +42,9 @@
 #include <QDebug>
 #include <QByteArray>
 #include <QString>
+#include <QtSerialPort/QSerialPort>
 
 #include <QtSerialPort/QSerialPortInfo>
-
-#include "pf_mcontroller.h"
 
 QT_USE_NAMESPACE
 
@@ -63,7 +62,6 @@ Dialog::Dialog(QWidget *parent)
     , statusLabel(new QLabel(tr("Status: Not running.")))
     , runButton(new QPushButton(tr("Start")))
     , sendButton(new QPushButton(tr("Send")))
-    , pf(NULL)
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialRxPortComboBox->addItem(info.portName());
@@ -92,10 +90,12 @@ Dialog::Dialog(QWidget *parent)
     serialRxPortComboBox->setFocus();
     serialTxPortComboBox->setFocus();
 
+    requestLineEdit->setText("010203");
+
     connect(runButton, SIGNAL(clicked()),
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
-            this, SLOT(transmitt()));
+            this, SLOT(sendprocessing()));
 //    connect(&thread, SIGNAL(response(QString)),
 //            this, SLOT(showResponse(QString)));
 //    connect(&thread, SIGNAL(error(QString)),
@@ -112,27 +112,21 @@ void Dialog::openport()
                               " " +
                               serialTxPortComboBox->currentText()));
 
-    if(NULL == pf)
-    {
-        pf = new pf_mcontroller(serialTxPortComboBox->currentText(),
-                                serialRxPortComboBox->currentText());
-    }
+    pf_adapt.open(
+                serialRxPortComboBox->currentText(),
+                serialTxPortComboBox->currentText());
 
 //    thread.transaction(serialPortComboBox->currentText(),
 //                       waitResponseSpinBox->value(),
 //                       requestLineEdit->text());
 }
 
-void Dialog::transmitt()
+void Dialog::sendprocessing()
 {
-    if(NULL != pf)
-    {
-        pf->broadcast(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    }
-    else
-    {
-        QDebug(QtWarningMsg) << "Can't transmitt. Controller isn't created" ;
-    }
+    QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
+    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread() << "Data: ";
+    //pf->broadcast(data);
+    emit(pf_adapt.send_broadcast(data));
 }
 
 void Dialog::showResponse(const QString &s)

@@ -36,8 +36,7 @@
 
 #include <QDialog>
 
-#include "masterthread.h"
-#include "pf_mcontroller.h"
+#include "pf_adaptor.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -58,10 +57,12 @@ public:
 
 private slots:
     void openport();
-    void transmitt();
+    void sendprocessing();
     void showResponse(const QString &s);
     void processError(const QString &s);
     void processTimeout(const QString &s);
+
+signals:
 
 private:
     void setControlsEnabled(bool enable);
@@ -80,7 +81,7 @@ private:
     QPushButton *runButton;
     QPushButton *sendButton;
 
-    pf_mcontroller *pf;
+    pf_adaptor pf_adapt;
 
     //MasterThread thread;
 };

@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <QByteArray>
 
+#define START_CHAR (unsigned char)(0xFE)
+#define END_CHAR (unsigned char)(0xFF)
+
 class pf_crc
 {
 public:

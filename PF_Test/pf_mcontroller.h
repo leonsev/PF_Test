@@ -17,29 +17,29 @@ class pf_mcontroller : public QObject
 {
     Q_OBJECT
 public:
-    pf_mcontroller(QString out_port, QString in_port);
+    pf_mcontroller();
 
 
-    retval_t request (const QByteArray& request, QByteArray& reply);
-    retval_t broadcast (const QByteArray& request);
+//    retval_t request (const QByteArray& request, QByteArray& reply);
+//    retval_t broadcast (const QByteArray& request);
 
     ~pf_mcontroller();
 
 signals:
 
 public slots:
-
+    void broadcast (const QByteArray request);
 private slots:
-    void telegramReceived (QByteArray telegram);
-    void rxEvent();
+//    void telegramReceived (QByteArray telegram);
+//    void rxEvent();
 
 private: //members
 
-    QSerialPort* const m_tx_port;
-    QSerialPort* const m_rx_port;
-    pf_rxprocessor m_proc;
-    QMutex request_mutex;
-    pf_rxbuffer m_buf;
+    QSerialPort &m_tx_port;
+    QSerialPort &m_rx_port;
+//    pf_rxprocessor m_proc;
+//    QMutex request_mutex;
+//    pf_rxbuffer m_buf;
 
 
 private: //methods
