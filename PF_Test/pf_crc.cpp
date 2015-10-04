@@ -1,7 +1,5 @@
 #include "pf_crc.h"
 
-#include "pf_mcontroller.h"
-
 unsigned char pf_crc::get(const QByteArray &data)
 {
     unsigned char crc = START_CHAR;

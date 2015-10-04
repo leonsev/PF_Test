@@ -1,7 +1,6 @@
 #include <QByteArray>
 #include <QDebug>
 
-#include "pf_mcontroller.h"
 #include "pf_receiver.h"
 #include "pf_retval.h"
 #include "pf_crc.h"

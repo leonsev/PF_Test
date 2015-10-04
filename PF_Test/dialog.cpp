@@ -106,7 +106,7 @@ Dialog::Dialog(QWidget *parent)
 
 Dialog::~Dialog()
 {
-    if(pf) {delete pf;}
+
 }
 
 void Dialog::openport()
