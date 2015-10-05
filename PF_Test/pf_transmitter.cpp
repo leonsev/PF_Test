@@ -4,6 +4,24 @@
 #include "pf_transmitter.h"
 #include "pf_crc.h"
 
+namespace
+{
+bool setup_port (QSerialPort& port, qint32 baud_rate)
+{
+    //Set unlimited Rx buffer size
+    port.setReadBufferSize(0);
+
+    QDebug(QtDebugMsg) << "Setup port:" << port.portName() << "Baud rate:" << baud_rate;
+
+    return
+    port.setBaudRate(baud_rate) ||
+    port.setDataBits(QSerialPort::Data8) ||
+    port.setParity(QSerialPort::NoParity) ||
+    port.setStopBits(QSerialPort::OneStop) ||
+    port.setFlowControl(QSerialPort::NoFlowControl);
+}
+}
+
 pf_transmitter::pf_transmitter(QObject *parent) : QObject(parent),
     tx_port(NULL), rx_port(NULL), timer(NULL),
     echo_timeout(500), request_timeout(500),
@@ -29,10 +47,13 @@ pf_transmitter::~pf_transmitter()
         delete(rx_port);
         rx_port = NULL;
     }
-    delete(timer);
+    if(NULL != timer)
+    {
+        delete(timer);
+    }
 }
 
-void pf_transmitter::open_serial(QString tx_port_, QString rx_port_)
+void pf_transmitter::open_serial(QString tx_port_, QString rx_port_, qint32 baud_rate)
 {
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
@@ -41,14 +62,18 @@ void pf_transmitter::open_serial(QString tx_port_, QString rx_port_)
     {
         QDebug(QtDebugMsg) << "Creating tx port:" << tx_port_;
         tx_port = new QSerialPort(tx_port_);
+        if(!setup_port(*tx_port, baud_rate))
+        {
+            QDebug(QtWarningMsg) << "Can't setup port:" << tx_port->portName();
+        }
     }
     else if(tx_port_ != tx_port->portName())
     {
         tx_port->close();
     }
-    if(tx_port->open(QIODevice::ReadWrite))
+    if(!tx_port->open(QIODevice::ReadWrite))
     {
-        QDebug(QtDebugMsg) << "Tx port is opened";
+        QDebug(QtWarningMsg) << "Can't open port:" << tx_port->portName();
     }
 
     if(tx_port_ == rx_port_)
@@ -62,14 +87,18 @@ void pf_transmitter::open_serial(QString tx_port_, QString rx_port_)
         {
             QDebug(QtDebugMsg) << "Creating rx port:" << rx_port_;
             rx_port = new QSerialPort(rx_port_);
+            if(!setup_port(*rx_port, baud_rate))
+            {
+                QDebug(QtWarningMsg) << "Can't setup port:" << rx_port->portName();
+            }
         }
         else if(rx_port_ != rx_port->portName())
         {
             rx_port->close();
         }
-        if(rx_port->open(QIODevice::ReadWrite))
+        if(!rx_port->open(QIODevice::ReadWrite))
         {
-            QDebug(QtDebugMsg) << "Rx port is opened";
+            QDebug(QtWarningMsg) << "Can't open port:" << tx_port->portName();
         }
     }
 
@@ -119,9 +148,6 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 
         tx_port->write(tx_data);
 
-        //TODO remove
-        tx_port->waitForBytesWritten(-1);
-
         timer->start(echo_timeout);
     }
     else
@@ -133,6 +159,10 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 void pf_transmitter::setState(pf_transmitter::State_t state_)
 {
     state = state_;
+    if(state == READY)
+    {
+        emit(ready());
+    }
 }
 
 pf_transmitter::State_t pf_transmitter::getState() const
@@ -174,9 +204,10 @@ void pf_transmitter::data_received()
 
             int reply_time = request_timeout - timer->remainingTime();
             timer->stop();
+            emit(reply(current_request, telegram, reply_time));
             setState(READY);
             QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
-            //TODO Emit reply signal
+
         }
     }
 }

@@ -4,18 +4,18 @@
 
 pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent)
 {
-    connect(this, SIGNAL(open_serial(QString, QString)),
-            &tx, SLOT(open_serial(QString, QString)));
+    connect(this, SIGNAL(open_serial(QString, QString, qint32)),
+            &tx, SLOT(open_serial(QString, QString, qint32)));
 
-    connect(this, SIGNAL(send_broadcast(QByteArray, bool)),
+    connect(this, SIGNAL(request(QByteArray, bool)),
             &tx, SLOT(transmitt(QByteArray, bool)));
 
     //TODO Can work in existing thread
     tx.moveToThread(&tr_tx);
 
-    tr_tx.setPriority(QThread::TimeCriticalPriority);
-
     tr_tx.start();
+
+    tr_tx.setPriority(QThread::TimeCriticalPriority);
 }
 
 pf_adaptor::~pf_adaptor()
@@ -29,8 +29,8 @@ pf_adaptor::~pf_adaptor()
     }
 }
 
-void pf_adaptor::open(const QString &tx, const QString &rx)
-{
-    emit (open_serial(tx, rx));
+void pf_adaptor::open(const QString &tx, const QString &rx, qint32 baud_rate)
+{    
+    emit (open_serial(tx, rx, baud_rate));
 }
 

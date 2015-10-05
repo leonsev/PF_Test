@@ -42,6 +42,7 @@
 #include <QDebug>
 #include <QByteArray>
 #include <QString>
+#include <QCheckBox>
 #include <QtSerialPort/QSerialPort>
 
 #include <QtSerialPort/QSerialPortInfo>
@@ -54,13 +55,15 @@ Dialog::Dialog(QWidget *parent)
     , serialPortLabel(new QLabel(tr("Serial port:")))
     , serialRxPortComboBox(new QComboBox())
     , serialTxPortComboBox(new QComboBox())
-    , waitResponseLabel(new QLabel(tr("Wait response, msec:")))
-    , waitResponseSpinBox(new QSpinBox())
-    , requestLabel(new QLabel(tr("Request:")))
-    , requestLineEdit(new QLineEdit(tr("")))
+    , baudRateLabel(new QLabel(tr("Baud rate:")))
+    //, waitResponseSpinBox(new QSpinBox())
+    , baudRateValue(new QComboBox())
+    , requestLabel(new QLabel(tr("Message:")))
+    , requestChBox(new QCheckBox(tr("request")))
+    , requestLineEdit(new QLineEdit(tr("FD 0E")))
     , trafficLabel(new QLabel(tr("No traffic.")))
     , statusLabel(new QLabel(tr("Status: Not running.")))
-    , runButton(new QPushButton(tr("Start")))
+    , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
@@ -69,18 +72,29 @@ Dialog::Dialog(QWidget *parent)
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialTxPortComboBox->addItem(info.portName());
 
-    waitResponseSpinBox->setRange(0, 10000);
-    waitResponseSpinBox->setValue(1000);
+    //requestChBox->setCheckState(Qt::Checked);
+
+
+    baudRateValue->addItem("9600");
+    baudRateValue->addItem("19200");
+    baudRateValue->addItem("38400");
+    baudRateValue->addItem("57600");
+    baudRateValue->addItem("115200");
+
+//    waitResponseSpinBox->setRange(0, 10000);
+//    waitResponseSpinBox->setValue(1000);
 
     QGridLayout *mainLayout = new QGridLayout;
     mainLayout->addWidget(serialPortLabel, 0, 0);
     mainLayout->addWidget(serialRxPortComboBox, 0, 1);
     mainLayout->addWidget(serialTxPortComboBox, 0, 2);
-    mainLayout->addWidget(waitResponseLabel, 1, 0);
-    mainLayout->addWidget(waitResponseSpinBox, 1, 1);
+    mainLayout->addWidget(baudRateLabel, 1, 0);
+    //mainLayout->addWidget(waitResponseSpinBox, 1, 1);
+    mainLayout->addWidget(baudRateValue, 1, 1);
     mainLayout->addWidget(runButton, 0, 3);
-    mainLayout->addWidget(sendButton, 0, 4);
+    mainLayout->addWidget(sendButton, 0, 4);;
     mainLayout->addWidget(requestLabel, 2, 0);
+    mainLayout->addWidget(requestChBox, 2, 4);
     mainLayout->addWidget(requestLineEdit, 2, 1, 1, 3);
     mainLayout->addWidget(trafficLabel, 3, 0, 1, 4);
     mainLayout->addWidget(statusLabel, 4, 0, 1, 5);
@@ -89,8 +103,6 @@ Dialog::Dialog(QWidget *parent)
     setWindowTitle(tr("PF_Test"));
     serialRxPortComboBox->setFocus();
     serialTxPortComboBox->setFocus();
-
-    requestLineEdit->setText("010203");
 
     connect(runButton, SIGNAL(clicked()),
             this, SLOT(openport()));
@@ -119,7 +131,8 @@ void Dialog::openport()
 
     pf_adapt.open(
                 serialRxPortComboBox->currentText(),
-                serialTxPortComboBox->currentText());
+                serialTxPortComboBox->currentText(),
+                baudRateValue->currentText().toInt());
 
 //    thread.transaction(serialPortComboBox->currentText(),
 //                       waitResponseSpinBox->value(),
@@ -131,7 +144,7 @@ void Dialog::sendprocessing()
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
-    emit(pf_adapt.send_broadcast(data, false));
+    emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
 }
 
 void Dialog::showResponse(const QString &s)
@@ -162,5 +175,6 @@ void Dialog::setControlsEnabled(bool enable)
     runButton->setEnabled(enable);
     serialRxPortComboBox->setEnabled(enable);
     serialTxPortComboBox->setEnabled(enable);
-    waitResponseSpinBox->setEnabled(enable);
+    baudRateValue->setEnabled(enable);
+    //waitResponseSpinBox->setEnabled(enable);
 }

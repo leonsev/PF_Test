@@ -15,9 +15,11 @@ public:
     virtual ~pf_transmitter();
 
 signals:
-
+    void reply(QByteArray, QByteArray, int);
+    void ready();
+    void error(QString);
 public slots:
-    void open_serial(QString, QString);
+    void open_serial(QString, QString, qint32 baud_rate = QSerialPort::Baud9600);
     void transmitt(QByteArray, bool);
 
 private slots:

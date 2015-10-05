@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QString>
 #include <QByteArray>
+#include <QSerialPort>
 
 #include "pf_transmitter.h"
 #include "pf_receiver.h"
@@ -17,13 +18,14 @@ class pf_adaptor : public QObject
 public:
     explicit pf_adaptor(QObject *parent = 0);
     virtual ~pf_adaptor();
-    void open(const QString&, const QString&);
+    void open(const QString&, const QString&, qint32 /*baud_rate*/);
 
 signals:
-    void open_serial(QString, QString);
-    void send_broadcast(QByteArray, bool reply);
+    void open_serial(QString, QString, qint32 /*baud_rate*/);
+    void request(QByteArray, bool reply);
 
 public slots:
+
 
 private: //members
     QThread tr_tx;

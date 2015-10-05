@@ -35,6 +35,7 @@
 #define DIALOG_H
 
 #include <QDialog>
+#include <QCheckBox>
 
 #include "pf_adaptor.h"
 
@@ -73,9 +74,11 @@ private:
     QLabel *serialPortLabel;
     QComboBox *serialRxPortComboBox;
     QComboBox *serialTxPortComboBox;
-    QLabel *waitResponseLabel;
-    QSpinBox *waitResponseSpinBox;
+    QLabel *baudRateLabel;
+    QComboBox *baudRateValue;
+    //QSpinBox *waitResponseSpinBox;
     QLabel *requestLabel;
+    QCheckBox* requestChBox;
     QLineEdit *requestLineEdit;
     QLabel *trafficLabel;
     QLabel *statusLabel;
