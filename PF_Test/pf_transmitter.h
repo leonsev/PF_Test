@@ -6,6 +6,7 @@
 #include <QTimer>
 
 #include "pf_receiver.h"
+#include "pf_error.h"
 
 class pf_transmitter : public QObject
 {
@@ -14,13 +15,15 @@ public:
     explicit pf_transmitter(QObject *parent = 0);
     virtual ~pf_transmitter();
 
+
 signals:
-    void reply(QByteArray, QByteArray, int);
+    void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void ready();
-    void error(QString);
+    void error(pf_error::error_t /*err_type*/, pf_error err );
 public slots:
     void open_serial(QString, QString, qint32 baud_rate = QSerialPort::Baud9600);
     void transmitt(QByteArray, bool);
+    void close_port(void);
 
 private slots:
     void data_received();

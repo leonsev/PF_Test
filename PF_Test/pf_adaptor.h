@@ -9,6 +9,7 @@
 
 #include "pf_transmitter.h"
 #include "pf_receiver.h"
+#include "pf_error.h"
 
 
 
@@ -18,19 +19,24 @@ class pf_adaptor : public QObject
 public:
     explicit pf_adaptor(QObject *parent = 0);
     virtual ~pf_adaptor();
-    void open(const QString&, const QString&, qint32 /*baud_rate*/);
 
 signals:
-    void open_serial(QString, QString, qint32 /*baud_rate*/);
-    void request(QByteArray, bool reply);
+    /* in */
+    void request_s(QByteArray, bool reply);
+    void open_serial_s(QString, QString, qint32 /*baud_rate*/);
+    /* out */
+    void reply_s(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
 
 public slots:
+    void open_serial_sl(const QString&, const QString&, const qint32 /*baud_rate*/);
+    void request_sl(const QByteArray&, const bool reply);
 
+private slots:
+    void reply_sl(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
 
 private: //members
-    QThread tr_tx;
-
-    pf_transmitter tx;
+    QThread* tr_tx_p;
+    pf_transmitter* tx_p;
 
 };
 

@@ -61,7 +61,7 @@ Dialog::Dialog(QWidget *parent)
     , requestLabel(new QLabel(tr("Message:")))
     , requestChBox(new QCheckBox(tr("request")))
     , requestLineEdit(new QLineEdit(tr("FD 0E")))
-    , trafficLabel(new QLabel(tr("No traffic.")))
+    , trafficLabel(new QLabel(tr("Result")))
     , statusLabel(new QLabel(tr("Status: Not running.")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
@@ -108,6 +108,8 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
             this, SLOT(sendprocessing()));
+    connect(&pf_adapt, SIGNAL(reply_s(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
+            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
 //    connect(&thread, SIGNAL(response(QString)),
 //            this, SLOT(showResponse(QString)));
 //    connect(&thread, SIGNAL(error(QString)),
@@ -129,10 +131,10 @@ void Dialog::openport()
                               " " +
                               serialTxPortComboBox->currentText()));
 
-    pf_adapt.open(
+    emit (pf_adapt.open_serial_s(
                 serialRxPortComboBox->currentText(),
                 serialTxPortComboBox->currentText(),
-                baudRateValue->currentText().toInt());
+                baudRateValue->currentText().toInt()));
 
 //    thread.transaction(serialPortComboBox->currentText(),
 //                       waitResponseSpinBox->value(),
@@ -144,7 +146,7 @@ void Dialog::sendprocessing()
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
-    emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
+    emit(pf_adapt.request_sl(data, Qt::Checked == requestChBox->checkState()));
 }
 
 void Dialog::showResponse(const QString &s)
@@ -168,6 +170,14 @@ void Dialog::processTimeout(const QString &s)
     setControlsEnabled(true);
     statusLabel->setText(tr("Status: Running, %1.").arg(s));
     trafficLabel->setText(tr("No traffic."));
+}
+
+void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
+{
+    QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
+
+    statusLabel->setText(tr("Got reply: ") + QString(reply.toHex()) + tr("\r\n")
+                         + tr("timeout: ") + QString::number(time));
 }
 
 void Dialog::setControlsEnabled(bool enable)

@@ -34,29 +34,16 @@ pf_transmitter::~pf_transmitter()
 {
     QDebug(QtDebugMsg) << "~pf_transmitter()";
 
-    if(NULL != tx_port)
-    {
-        QDebug(QtDebugMsg) << "Closing:" << tx_port->portName();
-        tx_port->close();
-        delete(tx_port);
-    }
-    if(NULL != rx_port && tx_port != rx_port)
-    {
-        QDebug(QtDebugMsg) << "Closing:" << rx_port->portName();
-        rx_port->close();
-        delete(rx_port);
-        rx_port = NULL;
-    }
-    if(NULL != timer)
-    {
-        delete(timer);
-    }
+    close_port();
 }
 
 void pf_transmitter::open_serial(QString tx_port_, QString rx_port_, qint32 baud_rate)
 {
-    timer = new QTimer;
-    connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
+    if(NULL == timer)
+    {
+        timer = new QTimer;
+        connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
+    }
 
     if(NULL == tx_port)
     {
@@ -154,6 +141,34 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
     {
         QDebug(QtWarningMsg) << "Busy. State is:" << getState();
     }
+}
+
+void pf_transmitter::close_port()
+{
+    if(NULL != tx_port)
+    {
+        QDebug(QtDebugMsg) << "Closing:" << tx_port->portName();
+        tx_port->close();
+        delete(tx_port);
+        if (tx_port == rx_port)
+        {
+            rx_port = NULL;
+        }
+        tx_port = NULL;
+    }
+    if(NULL != rx_port && tx_port != rx_port)
+    {
+        QDebug(QtDebugMsg) << "Closing:" << rx_port->portName();
+        rx_port->close();
+        delete(rx_port);
+        rx_port = NULL;
+    }
+    if(NULL != timer)
+    {
+        delete(timer);
+        timer = NULL;
+    }
+    setState(INIT);
 }
 
 void pf_transmitter::setState(pf_transmitter::State_t state_)
