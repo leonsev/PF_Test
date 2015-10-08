@@ -35,7 +35,10 @@
 #define DIALOG_H
 
 #include <QDialog>
-#include <QCheckBox>
+
+#include <QStandardItemModel>
+#include <QGroupBox>
+#include <QTreeView>
 
 #include "pf_adaptor.h"
 
@@ -46,7 +49,9 @@ class QLineEdit;
 class QSpinBox;
 class QPushButton;
 class QComboBox;
-
+class QGroupBox;
+class QCheckBox;
+class QStandardItemModel;
 QT_END_NAMESPACE
 
 class Dialog : public QDialog
@@ -60,9 +65,6 @@ public:
 private slots:
     void openport();
     void sendprocessing();
-    void showResponse(const QString &s);
-    void processError(const QString &s);
-    void processTimeout(const QString &s);
     void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
 
 signals:
@@ -81,10 +83,14 @@ private:
     QLabel *requestLabel;
     QCheckBox* requestChBox;
     QLineEdit *requestLineEdit;
-    QLabel *trafficLabel;
-    QLabel *statusLabel;
+    QLabel *stalusLabel;
+    QLabel *statusValue;
     QPushButton *runButton;
     QPushButton *sendButton;
+    QStandardItemModel *resultTable;
+    QTreeView *resultTableView;
+    QGroupBox *resultBox;
+    QGroupBox *controlBox;
 
     pf_adaptor pf_adapt;
 

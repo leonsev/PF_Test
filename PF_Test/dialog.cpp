@@ -61,10 +61,14 @@ Dialog::Dialog(QWidget *parent)
     , requestLabel(new QLabel(tr("Message:")))
     , requestChBox(new QCheckBox(tr("request")))
     , requestLineEdit(new QLineEdit(tr("FD 0E")))
-    , trafficLabel(new QLabel(tr("Result")))
-    , statusLabel(new QLabel(tr("Status: Not running.")))
+    , stalusLabel(new QLabel(tr("Status")))
+    , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
+    , resultTableView(new QTreeView())
+    , resultTable(new QStandardItemModel(6,6))
+    , resultBox(new QGroupBox(tr("Result")))
+    , controlBox(new QGroupBox(tr("Control")))
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialRxPortComboBox->addItem(info.portName());
@@ -74,31 +78,52 @@ Dialog::Dialog(QWidget *parent)
 
     //requestChBox->setCheckState(Qt::Checked);
 
-
     baudRateValue->addItem("9600");
     baudRateValue->addItem("19200");
     baudRateValue->addItem("38400");
     baudRateValue->addItem("57600");
     baudRateValue->addItem("115200");
 
-//    waitResponseSpinBox->setRange(0, 10000);
-//    waitResponseSpinBox->setValue(1000);
+
+    resultTable->setHeaderData(0, Qt::Horizontal, QObject::tr("#"));
+    resultTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Type"));
+    resultTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Request"));
+    resultTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Reply"));
+    resultTable->setHeaderData(4, Qt::Horizontal, QObject::tr("Delay"));
+    resultTable->setHeaderData(5, Qt::Horizontal, QObject::tr("Error"));
+
+    resultTable->insertRow(0);
+    resultTable->setData(resultTable->index(0, 0), "subject");
+    resultTable->setData(resultTable->index(0, 1), "sender");
+    resultTable->setData(resultTable->index(0, 2), "date");
+
+    QHBoxLayout *resultLayout = new QHBoxLayout;
+    resultLayout->addWidget(resultTableView);
+    resultBox->setLayout(resultLayout);
+
+    QGridLayout *controlLayout = new QGridLayout;
+    controlLayout->addWidget(serialPortLabel, 0, 0);
+    controlLayout->addWidget(serialRxPortComboBox, 0, 1);
+    controlLayout->addWidget(serialTxPortComboBox, 0, 2);
+    controlLayout->addWidget(baudRateLabel, 1, 0);
+    controlLayout->addWidget(baudRateValue, 1, 1);
+    controlLayout->addWidget(runButton, 0, 3);
+    controlLayout->addWidget(sendButton, 0, 4);;
+    controlLayout->addWidget(requestLabel, 2, 0);
+    controlLayout->addWidget(requestChBox, 2, 4);
+    controlLayout->addWidget(requestLineEdit, 2, 1);
+    controlLayout->addWidget(stalusLabel, 3, 0);
+    controlLayout->addWidget(statusValue, 4, 0);
+    controlBox->setLayout(controlLayout);
 
     QGridLayout *mainLayout = new QGridLayout;
-    mainLayout->addWidget(serialPortLabel, 0, 0);
-    mainLayout->addWidget(serialRxPortComboBox, 0, 1);
-    mainLayout->addWidget(serialTxPortComboBox, 0, 2);
-    mainLayout->addWidget(baudRateLabel, 1, 0);
-    //mainLayout->addWidget(waitResponseSpinBox, 1, 1);
-    mainLayout->addWidget(baudRateValue, 1, 1);
-    mainLayout->addWidget(runButton, 0, 3);
-    mainLayout->addWidget(sendButton, 0, 4);;
-    mainLayout->addWidget(requestLabel, 2, 0);
-    mainLayout->addWidget(requestChBox, 2, 4);
-    mainLayout->addWidget(requestLineEdit, 2, 1, 1, 3);
-    mainLayout->addWidget(trafficLabel, 3, 0, 1, 4);
-    mainLayout->addWidget(statusLabel, 4, 0, 1, 5);
+    mainLayout->addWidget(controlBox,0,0);
+    mainLayout->addWidget(resultBox,1,0);
     setLayout(mainLayout);
+
+    resultTableView->setModel(resultTable);
+    resultTableView->setRootIsDecorated(false);
+    resultTableView->setAlternatingRowColors(true);
 
     setWindowTitle(tr("PF_Test"));
     serialRxPortComboBox->setFocus();
@@ -110,12 +135,6 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(sendprocessing()));
     connect(&pf_adapt, SIGNAL(reply_s(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
             this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
-//    connect(&thread, SIGNAL(response(QString)),
-//            this, SLOT(showResponse(QString)));
-//    connect(&thread, SIGNAL(error(QString)),
-//            this, SLOT(processError(QString)));
-//    connect(&thread, SIGNAL(timeout(QString)),
-    //            this, SLOT(processTimeout(QString)));
 }
 
 Dialog::~Dialog()
@@ -126,7 +145,7 @@ Dialog::~Dialog()
 void Dialog::openport()
 {
     setControlsEnabled(false);
-    statusLabel->setText(tr("Status: Running, connected to port %1.")
+    statusValue->setText(tr("Status: Running, connected to port %1.")
                          .arg(serialRxPortComboBox->currentText() +
                               " " +
                               serialTxPortComboBox->currentText()));
@@ -149,35 +168,19 @@ void Dialog::sendprocessing()
     emit(pf_adapt.request_sl(data, Qt::Checked == requestChBox->checkState()));
 }
 
-void Dialog::showResponse(const QString &s)
-{
-    setControlsEnabled(true);
-    trafficLabel->setText(tr("Traffic, transaction #%1:"
-                             "\n\r-request: %2"
-                             "\n\r-response: %3")
-                          .arg(++transactionCount).arg(requestLineEdit->text()).arg(s));
-}
-
-void Dialog::processError(const QString &s)
-{
-    setControlsEnabled(true);
-    statusLabel->setText(tr("Status: Not running, %1.").arg(s));
-    trafficLabel->setText(tr("No traffic."));
-}
-
-void Dialog::processTimeout(const QString &s)
-{
-    setControlsEnabled(true);
-    statusLabel->setText(tr("Status: Running, %1.").arg(s));
-    trafficLabel->setText(tr("No traffic."));
-}
-
 void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
 {
     QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
 
-    statusLabel->setText(tr("Got reply: ") + QString(reply.toHex()) + tr("\r\n")
+    statusValue->setText(tr("Got reply: ") + QString(reply.toHex()) + tr("\r\n")
                          + tr("timeout: ") + QString::number(time));
+
+
+    resultTable->insertRow(0);
+    resultTable->setData(resultTable->index(0, 0), "0");
+    resultTable->setData(resultTable->index(0, 1), request.toHex());
+    resultTable->setData(resultTable->index(0, 2), reply.toHex());
+    resultTable->setData(resultTable->index(0, 3), QString(time));
 }
 
 void Dialog::setControlsEnabled(bool enable)
