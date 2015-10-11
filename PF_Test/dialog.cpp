@@ -60,15 +60,17 @@ Dialog::Dialog(QWidget *parent)
     , baudRateValue(new QComboBox())
     , requestLabel(new QLabel(tr("Message:")))
     , requestChBox(new QCheckBox(tr("request")))
+    , cyclicChBox(new QCheckBox(tr("cyclic")))
     , requestLineEdit(new QLineEdit(tr("FD 0E")))
     , stalusLabel(new QLabel(tr("Status")))
     , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
+    , resultTable(new QStandardItemModel(6,4))
     , resultTableView(new QTreeView())
-    , resultTable(new QStandardItemModel(6,6))
     , resultBox(new QGroupBox(tr("Result")))
     , controlBox(new QGroupBox(tr("Control")))
+    , reply_counter(0)
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialRxPortComboBox->addItem(info.portName());
@@ -86,16 +88,10 @@ Dialog::Dialog(QWidget *parent)
 
 
     resultTable->setHeaderData(0, Qt::Horizontal, QObject::tr("#"));
-    resultTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Type"));
-    resultTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Request"));
-    resultTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Reply"));
-    resultTable->setHeaderData(4, Qt::Horizontal, QObject::tr("Delay"));
-    resultTable->setHeaderData(5, Qt::Horizontal, QObject::tr("Error"));
-
-    resultTable->insertRow(0);
-    resultTable->setData(resultTable->index(0, 0), "subject");
-    resultTable->setData(resultTable->index(0, 1), "sender");
-    resultTable->setData(resultTable->index(0, 2), "date");
+    //resultTable->setColumnWidth(0,100);
+    resultTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Request"));
+    resultTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Reply"));
+    resultTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Delay"));
 
     QHBoxLayout *resultLayout = new QHBoxLayout;
     resultLayout->addWidget(resultTableView);
@@ -111,6 +107,7 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(sendButton, 0, 4);;
     controlLayout->addWidget(requestLabel, 2, 0);
     controlLayout->addWidget(requestChBox, 2, 4);
+    controlLayout->addWidget(cyclicChBox, 2, 3);
     controlLayout->addWidget(requestLineEdit, 2, 1);
     controlLayout->addWidget(stalusLabel, 3, 0);
     controlLayout->addWidget(statusValue, 4, 0);
@@ -133,8 +130,10 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
             this, SLOT(sendprocessing()));
-    connect(&pf_adapt, SIGNAL(reply_s(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
+    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
             this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
+    connect(&pf_adapt, SIGNAL(error(pf_error)),
+            this, SLOT(error(pf_error)));
 }
 
 Dialog::~Dialog()
@@ -150,14 +149,11 @@ void Dialog::openport()
                               " " +
                               serialTxPortComboBox->currentText()));
 
-    emit (pf_adapt.open_serial_s(
+    emit (pf_adapt.open_serial(
                 serialRxPortComboBox->currentText(),
                 serialTxPortComboBox->currentText(),
                 baudRateValue->currentText().toInt()));
 
-//    thread.transaction(serialPortComboBox->currentText(),
-//                       waitResponseSpinBox->value(),
-//                       requestLineEdit->text());
 }
 
 void Dialog::sendprocessing()
@@ -165,7 +161,32 @@ void Dialog::sendprocessing()
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
-    emit(pf_adapt.request_sl(data, Qt::Checked == requestChBox->checkState()));
+
+    if(sendButton->isCheckable())
+    {
+        sendButton->setCheckable(false);
+        sendButton->setChecked(false);
+        emit(pf_adapt.cyclic_stop());
+    }
+    else
+    {
+        if (Qt::Checked == cyclicChBox->checkState())
+        {
+            //sendButton->setText("Stop");
+            sendButton->setCheckable(true);
+            sendButton->setChecked(true);
+            sendButton->isChecked();
+            emit(pf_adapt.cyclic_request(data, 0));
+        }
+        else
+        {
+            emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
+            if(Qt::Checked != requestChBox->checkState())
+            {
+               emit(reply(QByteArray(""),data, -1));
+            }
+        }
+    }
 }
 
 void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
@@ -175,12 +196,19 @@ void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
     statusValue->setText(tr("Got reply: ") + QString(reply.toHex()) + tr("\r\n")
                          + tr("timeout: ") + QString::number(time));
 
+    resultTable->insertRow(reply_counter);
+    resultTable->setData(resultTable->index(reply_counter, 0), QString::number(reply_counter+1));
+    resultTable->setData(resultTable->index(reply_counter, 1), request.toHex());
+    resultTable->setData(resultTable->index(reply_counter, 2), reply.toHex());
+    resultTable->setData(resultTable->index(reply_counter, 3), QString::number(time));
+    reply_counter++;
+}
 
-    resultTable->insertRow(0);
-    resultTable->setData(resultTable->index(0, 0), "0");
-    resultTable->setData(resultTable->index(0, 1), request.toHex());
-    resultTable->setData(resultTable->index(0, 2), reply.toHex());
-    resultTable->setData(resultTable->index(0, 3), QString(time));
+void Dialog::error(pf_error err)
+{
+    QDebug(QtDebugMsg) << "Got error: " << err.get_txt() << " in thread: " << (int)this->thread();
+
+    statusValue->setText(tr("Got error: ") + QString(err.get_txt()));
 }
 
 void Dialog::setControlsEnabled(bool enable)

@@ -19,7 +19,7 @@ public:
 signals:
     void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void ready();
-    void error(pf_error::error_t /*err_type*/, pf_error err );
+    void error(pf_error);
 public slots:
     void open_serial(QString, QString, qint32 baud_rate = QSerialPort::Baud9600);
     void transmitt(QByteArray, bool);
@@ -35,8 +35,7 @@ private: //members
     pf_receiver pf_rec;
     QByteArray current_request;
     QTimer *timer;
-    const int echo_timeout;
-    const int request_timeout;
+    const int max_timeout;
 
     enum State_t
     {

@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QSerialPort>
 
+#include "pf_error.h"
+
 class pf_receiver : public QObject
 {
     Q_OBJECT
@@ -12,8 +14,9 @@ public:
     virtual ~pf_receiver();
 
      bool process(const QByteArray& in_data, QByteArray& telegram);
+     bool is_empty(void);
 signals:
-
+     void error(pf_error);
 public slots:
 
 private: //members

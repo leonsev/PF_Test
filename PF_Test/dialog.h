@@ -41,6 +41,7 @@
 #include <QTreeView>
 
 #include "pf_adaptor.h"
+#include "pf_error.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -66,6 +67,7 @@ private slots:
     void openport();
     void sendprocessing();
     void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    void error(pf_error);
 
 signals:
 
@@ -82,6 +84,7 @@ private:
     //QSpinBox *waitResponseSpinBox;
     QLabel *requestLabel;
     QCheckBox* requestChBox;
+    QCheckBox* cyclicChBox;
     QLineEdit *requestLineEdit;
     QLabel *stalusLabel;
     QLabel *statusValue;
@@ -91,8 +94,9 @@ private:
     QTreeView *resultTableView;
     QGroupBox *resultBox;
     QGroupBox *controlBox;
-
     pf_adaptor pf_adapt;
+
+    quint32 reply_counter;
 
     //MasterThread thread;
 };

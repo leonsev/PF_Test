@@ -33,6 +33,7 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
                 if(it >= 1)
                 {
                     QDebug(QtWarningMsg) << "Unexpected data on a line" << data.left(it);
+                    emit(error(pf_error(pf_error::ERR_UNEXPECTED_DATA_RECEIVED)));
                 }
 
                 //Reset the data beggin
@@ -65,7 +66,8 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
                 else
                 {
                     //Push useful data
-                    QDebug(QtWarningMsg) << "Wrong CRC!!!";
+                    QDebug(QtWarningMsg) << "Wrong CRC!!!";                    
+                    emit(error(pf_error(pf_error::ERR_WRONG_CRC)));
                 }
 
                 //Reset the data beggin
@@ -76,6 +78,7 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
             {
                 //Push rubbish data
                 QDebug(QtWarningMsg) << "Unexpected data on a line" << data.left(it+1);
+                emit(error(pf_error(pf_error::ERR_UNEXPECTED_DATA_RECEIVED)));
 
                 //Reset the data beggin
                 data.remove(0,it+1);
@@ -94,4 +97,9 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
 
 
     return false;
+}
+
+bool pf_receiver::is_empty()
+{
+    return(it >= static_cast<size_t>(data.size()));
 }

@@ -23,11 +23,10 @@ bool setup_port (QSerialPort& port, qint32 baud_rate)
 }
 
 pf_transmitter::pf_transmitter(QObject *parent) : QObject(parent),
-    tx_port(NULL), rx_port(NULL), timer(NULL),
-    echo_timeout(500), request_timeout(500),
+    tx_port(NULL), rx_port(NULL), timer(NULL), max_timeout(50),
     state(INIT)
 {
-
+    connect(&pf_rec,SIGNAL(error(pf_error)),this,SIGNAL(error(pf_error)));
 }
 
 pf_transmitter::~pf_transmitter()
@@ -121,7 +120,7 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         }
 
         //TODO remove
-        setState(WAIT_REPLY);
+        //setState(WAIT_REPLY);
 
         current_request = tx_data;
 
@@ -135,7 +134,10 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 
         tx_port->write(tx_data);
 
-        timer->start(echo_timeout);
+        //TODO remove
+        tx_port->waitForBytesWritten(-1);
+
+        timer->start(max_timeout);
     }
     else
     {
@@ -165,6 +167,7 @@ void pf_transmitter::close_port()
     }
     if(NULL != timer)
     {
+        timer->stop();
         delete(timer);
         timer = NULL;
     }
@@ -188,43 +191,51 @@ pf_transmitter::State_t pf_transmitter::getState() const
 void pf_transmitter::data_received()
 {
     QByteArray telegram;
-    if(pf_rec.process(rx_port->readAll(),telegram))
+    do
     {
-        if (WAIT_ECHO_BROADCAST == getState() || WAIT_ECHO_REQUEST == getState())
+        if(pf_rec.process(rx_port->readAll(),telegram))
         {
-            if(telegram == current_request)
+            if (WAIT_ECHO_BROADCAST == getState() || WAIT_ECHO_REQUEST == getState())
             {
-                timer->stop();
-                QDebug(QtDebugMsg) << "Echo is received";
-
-                if(WAIT_ECHO_REQUEST == getState())
+                if(telegram == current_request)
                 {
-                    //in case of request message the new timeout for receive need to be activated
-                    setState(WAIT_REPLY);
-                    timer->start(request_timeout);
+                    timer->stop();
+                    QDebug(QtDebugMsg) << "Echo is received";
+
+                    if(WAIT_ECHO_REQUEST == getState())
+                    {
+                        //in case of request message the new timeout for receive need to be activated
+                        setState(WAIT_REPLY);
+                        timer->start(max_timeout);
+                    }
+                    else
+                    {
+                        setState(READY);
+                    }
                 }
                 else
                 {
-                    setState(READY);
+                    // TODO Emit error signal;
+                    QDebug(QtWarningMsg) << "Incorrect echo received. Transmitt: " << current_request << "Echo: " << telegram;
                 }
+            }
+            else if (WAIT_REPLY == getState())
+            {
+
+                int reply_time = max_timeout - timer->remainingTime();
+                timer->stop();
+                setState(READY);
+                QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
+                emit(reply(current_request, telegram, reply_time));
+
             }
             else
             {
-                // TODO Emit error signal;
-                QDebug(QtWarningMsg) << "Incorrect echo received. Transmitt: " << current_request << "Echo: " << telegram;
+                QDebug(QtWarningMsg) << "Unexpected message is received";
+                emit(error(pf_error(pf_error::ERR_UNEXPECTED_MESSAGE_RECEIVED)));
             }
         }
-        else if (WAIT_REPLY == getState())
-        {
-
-            int reply_time = request_timeout - timer->remainingTime();
-            timer->stop();
-            emit(reply(current_request, telegram, reply_time));
-            setState(READY);
-            QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
-
-        }
-    }
+    }while(!pf_rec.is_empty());
 }
 
 void pf_transmitter::timeout()
@@ -233,10 +244,12 @@ void pf_transmitter::timeout()
     if (WAIT_ECHO_BROADCAST == getState() || WAIT_ECHO_REQUEST == getState())
     {
         QDebug(QtWarningMsg) << "Timeout. Echo isn't received";
+        emit(error(pf_error(pf_error::ERR_NO_ECHO)));
     }
     else if (WAIT_REPLY == getState())
     {
         QDebug(QtWarningMsg) << "Timeout. Reply isn't received";
+        emit(error(pf_error(pf_error::ERR_NO_REPLY)));
     }
     else
     {
