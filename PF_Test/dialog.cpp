@@ -44,10 +44,17 @@
 #include <QString>
 #include <QCheckBox>
 #include <QtSerialPort/QSerialPort>
+#include <QTime>
 
 #include <QtSerialPort/QSerialPortInfo>
 
 QT_USE_NAMESPACE
+
+namespace
+{
+const quint8 delay_arr_size = 100;
+quint8 delay_arr[delay_arr_size];
+}
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
@@ -66,11 +73,16 @@ Dialog::Dialog(QWidget *parent)
     , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
-    , resultTable(new QStandardItemModel(6,4))
+    , resultTable(new QStandardItemModel(6,5))
     , resultTableView(new QTreeView())
+    , delayTable(new QStandardItemModel(100,2))
+    , delayTableView(new QTreeView())
+    , errorTable(new QStandardItemModel(6,4))
+    , errorTableView(new QTreeView())
     , resultBox(new QGroupBox(tr("Result")))
     , controlBox(new QGroupBox(tr("Control")))
     , reply_counter(0)
+    , error_counter(0)
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialRxPortComboBox->addItem(info.portName());
@@ -88,13 +100,30 @@ Dialog::Dialog(QWidget *parent)
 
 
     resultTable->setHeaderData(0, Qt::Horizontal, QObject::tr("#"));
-    //resultTable->setColumnWidth(0,100);
-    resultTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Request"));
-    resultTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Reply"));
-    resultTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Delay"));
+    resultTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Time"));
+    resultTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Request"));
+    resultTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Reply"));
+    resultTable->setHeaderData(4, Qt::Horizontal, QObject::tr("Delay"));
 
-    QHBoxLayout *resultLayout = new QHBoxLayout;
-    resultLayout->addWidget(resultTableView);
+    delayTable->setHeaderData(0, Qt::Horizontal, QObject::tr("Delay, ms"));
+    delayTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Test counter"));
+
+    for (quint8 i = 0; i < delayTable->rowCount(); i++)
+    {
+        delayTable->setData(delayTable->index(i, 0), QString::number(i));
+        delayTable->setData(delayTable->index(i, 1), QString::number(0));
+    }
+
+
+    errorTable->setHeaderData(0, Qt::Horizontal, QObject::tr("#"));
+    errorTable->setHeaderData(1, Qt::Horizontal, QObject::tr("Time"));
+    errorTable->setHeaderData(2, Qt::Horizontal, QObject::tr("Err code"));
+    errorTable->setHeaderData(3, Qt::Horizontal, QObject::tr("Err description"));
+
+    QGridLayout *resultLayout = new QGridLayout();
+    resultLayout->addWidget(resultTableView,0,0);
+    resultLayout->addWidget(delayTableView,0,1);
+    resultLayout->addWidget(errorTableView,0,2);
     resultBox->setLayout(resultLayout);
 
     QGridLayout *controlLayout = new QGridLayout;
@@ -118,9 +147,22 @@ Dialog::Dialog(QWidget *parent)
     mainLayout->addWidget(resultBox,1,0);
     setLayout(mainLayout);
 
+
+
     resultTableView->setModel(resultTable);
     resultTableView->setRootIsDecorated(false);
     resultTableView->setAlternatingRowColors(true);
+    resultTableView->setColumnWidth(0,30);
+
+    delayTableView->setModel(delayTable);
+    delayTableView->setRootIsDecorated(false);
+    delayTableView->setAlternatingRowColors(true);
+    delayTableView->setColumnWidth(0,60);
+
+    errorTableView->setModel(errorTable);
+    errorTableView->setRootIsDecorated(false);
+    errorTableView->setAlternatingRowColors(true);
+    errorTableView->setColumnWidth(0,30);
 
     setWindowTitle(tr("PF_Test"));
     serialRxPortComboBox->setFocus();
@@ -198,9 +240,10 @@ void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
 
     resultTable->insertRow(reply_counter);
     resultTable->setData(resultTable->index(reply_counter, 0), QString::number(reply_counter+1));
-    resultTable->setData(resultTable->index(reply_counter, 1), request.toHex());
-    resultTable->setData(resultTable->index(reply_counter, 2), reply.toHex());
-    resultTable->setData(resultTable->index(reply_counter, 3), QString::number(time));
+    resultTable->setData(resultTable->index(reply_counter, 1), QString::number(QTime::currentTime().msec()));
+    resultTable->setData(resultTable->index(reply_counter, 2), request.toHex());
+    resultTable->setData(resultTable->index(reply_counter, 3), reply.toHex());
+    resultTable->setData(resultTable->index(reply_counter, 4), QString::number(time));
     reply_counter++;
 }
 
@@ -209,6 +252,13 @@ void Dialog::error(pf_error err)
     QDebug(QtDebugMsg) << "Got error: " << err.get_txt() << " in thread: " << (int)this->thread();
 
     statusValue->setText(tr("Got error: ") + QString(err.get_txt()));
+
+    errorTable->insertRow(error_counter);
+    errorTable->setData(errorTable->index(error_counter, 0), QString::number(error_counter+1));
+    errorTable->setData(errorTable->index(error_counter, 1), QString::number(QTime::currentTime().msec()));
+    errorTable->setData(errorTable->index(error_counter, 2), QString::number(err.get_err_no()));
+    errorTable->setData(errorTable->index(error_counter, 3), err.get_txt());
+    error_counter++;
 }
 
 void Dialog::setControlsEnabled(bool enable)

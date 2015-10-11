@@ -92,11 +92,16 @@ private:
     QPushButton *sendButton;
     QStandardItemModel *resultTable;
     QTreeView *resultTableView;
+    QStandardItemModel *delayTable;
+    QTreeView *delayTableView;
+    QStandardItemModel *errorTable;
+    QTreeView *errorTableView;
     QGroupBox *resultBox;
     QGroupBox *controlBox;
     pf_adaptor pf_adapt;
 
     quint32 reply_counter;
+    quint32 error_counter;
 
     //MasterThread thread;
 };
