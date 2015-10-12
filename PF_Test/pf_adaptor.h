@@ -11,6 +11,7 @@
 #include "pf_receiver.h"
 #include "pf_error.h"
 #include "pf_cyclic_request.h"
+#include "pf_reply.h"
 
 
 
@@ -24,14 +25,16 @@ public:
 signals:
     /* in */
     void request(QByteArray, bool reply);
-    void open_serial(QString, QString, qint32 /*baud_rate*/);
+    void open_serial(QString, QString, qint32 /*baud_rate*/);    
+    void close_serial(void);
 
     void cyclic_request(QByteArray, quint32 /*period*/);
     void cyclic_stop();
 
 
     /* out */
-    void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+//    void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    void reply(pf_reply);
     void error(pf_error);
 
 public slots:

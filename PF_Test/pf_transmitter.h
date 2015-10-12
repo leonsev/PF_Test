@@ -7,6 +7,7 @@
 
 #include "pf_receiver.h"
 #include "pf_error.h"
+#include "pf_reply.h"
 
 class pf_transmitter : public QObject
 {
@@ -17,7 +18,8 @@ public:
 
 
 signals:
-    void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    void reply(pf_reply);
     void ready();
     void error(pf_error);
 public slots:

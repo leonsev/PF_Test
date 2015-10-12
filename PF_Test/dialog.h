@@ -42,6 +42,7 @@
 
 #include "pf_adaptor.h"
 #include "pf_error.h"
+#include "pf_reply.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -66,7 +67,8 @@ public:
 private slots:
     void openport();
     void sendprocessing();
-    void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
+    void reply(pf_reply);
     void error(pf_error);
 
 signals:

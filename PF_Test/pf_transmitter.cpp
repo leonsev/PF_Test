@@ -26,7 +26,7 @@ pf_transmitter::pf_transmitter(QObject *parent) : QObject(parent),
     tx_port(NULL), rx_port(NULL), timer(NULL), max_timeout(50),
     state(INIT)
 {
-    connect(&pf_rec,SIGNAL(error(pf_error)),this,SIGNAL(error(pf_error)));
+    connect(&pf_rec,SIGNAL(error(pf_error)),this,SIGNAL(error(pf_error)), Qt::QueuedConnection);
 }
 
 pf_transmitter::~pf_transmitter()
@@ -41,7 +41,7 @@ void pf_transmitter::open_serial(QString tx_port_, QString rx_port_, qint32 baud
     if(NULL == timer)
     {
         timer = new QTimer;
-        connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
+        connect(timer, SIGNAL(timeout()), this, SLOT(timeout()), Qt::QueuedConnection);
     }
 
     if(NULL == tx_port)
@@ -106,7 +106,7 @@ void pf_transmitter::open_serial(QString tx_port_, QString rx_port_, qint32 baud
 
 void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 {
-    QDebug(QtWarningMsg) << "pf_transmitter::transmitt thread" << this->thread();
+    //QDebug(QtWarningMsg) << "pf_transmitter::transmitt thread" << this->thread();
 
     if(getState() == READY)
     {
@@ -120,7 +120,7 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         }
 
         //TODO remove
-        //setState(WAIT_REPLY);
+        setState(WAIT_REPLY);
 
         current_request = tx_data;
 
@@ -130,7 +130,9 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 
         tx_data.append(END_CHAR);
 
-        QDebug(QtDebugMsg) << "Writing data:" << tx_data;
+        //QDebug(QtDebugMsg) << "Writing data:" << tx_data;
+
+        //tx_port->waitForBytesWritten(-1);
 
         tx_port->write(tx_data);
 
@@ -138,6 +140,8 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         //tx_port->waitForBytesWritten(-1);
 
         timer->start(max_timeout);
+
+        //while(READY != getState() && timer->remainingTime() > 10) {data_received();}
     }
     else
     {
@@ -193,14 +197,16 @@ void pf_transmitter::data_received()
     QByteArray telegram;
     do
     {
+        //QDebug(QtDebugMsg) << "data_received()";
         if(pf_rec.process(rx_port->readAll(),telegram))
         {
+            //QDebug(QtDebugMsg) << "got data";
             if (WAIT_ECHO_BROADCAST == getState() || WAIT_ECHO_REQUEST == getState())
             {
                 if(telegram == current_request)
                 {
                     timer->stop();
-                    QDebug(QtDebugMsg) << "Echo is received";
+                    //QDebug(QtDebugMsg) << "Echo is received";
 
                     if(WAIT_ECHO_REQUEST == getState())
                     {
@@ -217,6 +223,7 @@ void pf_transmitter::data_received()
                 {
                     // TODO Emit error signal;
                     QDebug(QtWarningMsg) << "Incorrect echo received. Transmitt: " << current_request << "Echo: " << telegram;
+                    emit(error(pf_error(pf_error::ERR_WRONG_ECHO)));
                 }
             }
             else if (WAIT_REPLY == getState())
@@ -225,14 +232,15 @@ void pf_transmitter::data_received()
                 int reply_time = max_timeout - timer->remainingTime();
                 timer->stop();
                 setState(READY);
-                QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
-                emit(reply(current_request, telegram, reply_time));
+                //QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
+                emit(reply(pf_reply(telegram, current_request, reply_time)));
 
             }
             else
             {
                 QDebug(QtWarningMsg) << "Unexpected message is received";
                 emit(error(pf_error(pf_error::ERR_UNEXPECTED_MESSAGE_RECEIVED)));
+                setState(READY);
             }
         }
     }while(!pf_rec.is_empty());

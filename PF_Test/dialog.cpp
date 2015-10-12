@@ -172,6 +172,10 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
             this, SLOT(sendprocessing()));
+//    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
+//            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
+    connect(&pf_adapt, SIGNAL(reply(pf_reply)),
+            this, SLOT(reply(pf_reply)));
     connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
             this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
     connect(&pf_adapt, SIGNAL(error(pf_error)),
@@ -225,25 +229,26 @@ void Dialog::sendprocessing()
             emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
             if(Qt::Checked != requestChBox->checkState())
             {
-               emit(reply(QByteArray(""),data, -1));
+               QByteArray empty("");
+               emit(reply(pf_reply(empty,data, (qint32)-1)));
             }
         }
     }
 }
-
-void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
+//void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
+void Dialog::reply(pf_reply reply_)
 {
-    QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
+    //QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
 
-    statusValue->setText(tr("Got reply: ") + QString(reply.toHex()) + tr("\r\n")
-                         + tr("timeout: ") + QString::number(time));
+    statusValue->setText(tr("Got reply: ") + QString(reply_.get_reply().toHex()) + tr("\r\n")
+                         + tr("timeout: ") + QString::number(reply_.get_delay()));
 
     resultTable->insertRow(reply_counter);
     resultTable->setData(resultTable->index(reply_counter, 0), QString::number(reply_counter+1));
-    resultTable->setData(resultTable->index(reply_counter, 1), QString::number(QTime::currentTime().msec()));
-    resultTable->setData(resultTable->index(reply_counter, 2), request.toHex());
-    resultTable->setData(resultTable->index(reply_counter, 3), reply.toHex());
-    resultTable->setData(resultTable->index(reply_counter, 4), QString::number(time));
+    resultTable->setData(resultTable->index(reply_counter, 1), QString::number(reply_.get_timestamp().msec()));
+    resultTable->setData(resultTable->index(reply_counter, 2), reply_.get_request().toHex());
+    resultTable->setData(resultTable->index(reply_counter, 3), reply_.get_reply().toHex());
+    resultTable->setData(resultTable->index(reply_counter, 4), QString::number(reply_.get_delay()));
     reply_counter++;
 }
 

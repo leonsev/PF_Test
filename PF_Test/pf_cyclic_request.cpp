@@ -17,7 +17,7 @@ pf_cyclic_request::~pf_cyclic_request()
 
 void pf_cyclic_request::next_request()
 {
-    QDebug(QtDebugMsg) << "ready signal";
+    //QDebug(QtDebugMsg) << "ready signal";
     tx_ready = true;
     try_send();
 }
@@ -56,7 +56,7 @@ void pf_cyclic_request::set(QByteArray request_sequence_, quint32 period_)
 
 void pf_cyclic_request::timeout()
 {
-    QDebug(QtDebugMsg) << "cc timeout";
+    //QDebug(QtDebugMsg) << "cc timeout";
     timeout_ready = true;
     timer->stop();
     try_send();
@@ -64,7 +64,7 @@ void pf_cyclic_request::timeout()
 
 void pf_cyclic_request::try_send()
 {
-    QDebug(QtDebugMsg) << "Try send";
+    //QDebug(QtDebugMsg) << "Try send";
     if(true == tx_ready && true == timeout_ready && READY == state)
     {
         tx_ready = false;
@@ -73,7 +73,7 @@ void pf_cyclic_request::try_send()
     }
     else
     {
-        QDebug(QtDebugMsg) << "Not ready to send:" << tx_ready << timeout_ready;
+        //QDebug(QtDebugMsg) << "Not ready to send:" << tx_ready << timeout_ready;
     }
 }
 

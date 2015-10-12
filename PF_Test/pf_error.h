@@ -16,13 +16,14 @@ public:
         ERR_WRONG_CRC,
         ERR_NO_ECHO,
         ERR_NO_REPLY,
+        ERR_WRONG_ECHO,
 
         ERR_TOTAL
     }error_t;
 
     pf_error(pf_error::error_t err_no_ = pf_error::ERR_NO);
     pf_error(const pf_error&);
-    ~pf_error();
+    virtual ~pf_error();
 
 signals:
 
