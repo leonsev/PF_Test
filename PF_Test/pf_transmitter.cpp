@@ -120,7 +120,7 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         }
 
         //TODO remove
-        setState(WAIT_REPLY);
+        //setState(WAIT_REPLY);
 
         current_request = tx_data;
 
