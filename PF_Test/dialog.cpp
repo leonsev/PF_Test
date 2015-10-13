@@ -135,10 +135,10 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(baudRateValue, 1, 1);
     controlLayout->addWidget(runButton, 0, 3);
     controlLayout->addWidget(sendButton, 0, 4);
-    //controlLayout->addWidget(cyclicButton, 0, 5);
+    controlLayout->addWidget(cyclicButton, 0, 5);
     controlLayout->addWidget(requestLabel, 2, 0);
     controlLayout->addWidget(requestChBox, 2, 4);
-    controlLayout->addWidget(cyclicChBox, 2, 3);
+    //controlLayout->addWidget(cyclicChBox, 2, 3);
     controlLayout->addWidget(requestLineEdit, 2, 1);
     controlLayout->addWidget(stalusLabel, 3, 0);
     controlLayout->addWidget(statusValue, 4, 0);

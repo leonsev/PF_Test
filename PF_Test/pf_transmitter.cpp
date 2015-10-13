@@ -120,7 +120,7 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         }
 
         //TODO remove
-        //setState(WAIT_REPLY);
+        setState(WAIT_REPLY);
 
         current_request = tx_data;
 
@@ -137,7 +137,7 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
         tx_port->write(tx_data);
 
         //TODO remove
-        //tx_port->waitForBytesWritten(-1);
+        tx_port->waitForBytesWritten(-1);
 
         timer->start(max_timeout);
 
@@ -230,6 +230,20 @@ void pf_transmitter::data_received()
             {
 
                 int reply_time = max_timeout - timer->remainingTime();
+
+                /* Timeout workaround */
+
+                int message_length = ((telegram.size() + 3/*start+stop+crc*/) * rx_port->baudRate())/QSerialPort::Baud9600;
+
+                if(message_length >= reply_time) {reply_time=0;}
+                else
+                {
+                    reply_time -=message_length;
+                }
+
+                /* Timeout workaround end */
+
+
                 timer->stop();
                 setState(READY);
                 //QDebug(QtDebugMsg) << "Reply received. Request: " << current_request << "Reply: " << telegram << "Delay: " << reply_time;
