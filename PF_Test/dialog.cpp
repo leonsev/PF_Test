@@ -74,7 +74,7 @@ Dialog::Dialog(QWidget *parent)
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
     , cyclicButton(new QPushButton(tr("Cyclic")))
-    , resultTable(new QStandardItemModel(6,5))
+    , resultTable(new QStandardItemModel(300,5))
     , resultTableView(new QTreeView())
     , delayTable(new QStandardItemModel(100,2))
     , delayTableView(new QTreeView())
@@ -249,11 +249,11 @@ void Dialog::reply(pf_reply reply_)
                          + tr("timeout: ") + QString::number(reply_.get_delay()));
 
     resultTable->insertRow(reply_counter);
-    resultTable->setData(resultTable->index(reply_counter, 0), QString::number(reply_counter+1));
-    resultTable->setData(resultTable->index(reply_counter, 1), QString::number(reply_.get_timestamp().msec()));
-    resultTable->setData(resultTable->index(reply_counter, 2), reply_.get_request().toHex());
-    resultTable->setData(resultTable->index(reply_counter, 3), reply_.get_reply().toHex());
-    resultTable->setData(resultTable->index(reply_counter, 4), QString::number(reply_.get_delay()));
+    resultTable->setData(resultTable->index(reply_counter%300, 0), QString::number(reply_counter+1));
+    resultTable->setData(resultTable->index(reply_counter%300, 1), QString::number(reply_.get_timestamp().msec()));
+    resultTable->setData(resultTable->index(reply_counter%300, 2), reply_.get_request().toHex());
+    resultTable->setData(resultTable->index(reply_counter%300, 3), reply_.get_reply().toHex());
+    resultTable->setData(resultTable->index(reply_counter%300, 4), QString::number(reply_.get_delay()));
     reply_counter++;
 }
 
