@@ -73,6 +73,7 @@ Dialog::Dialog(QWidget *parent)
     , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
+    , cyclicButton(new QPushButton(tr("Cyclic")))
     , resultTable(new QStandardItemModel(6,5))
     , resultTableView(new QTreeView())
     , delayTable(new QStandardItemModel(100,2))
@@ -133,7 +134,8 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(baudRateLabel, 1, 0);
     controlLayout->addWidget(baudRateValue, 1, 1);
     controlLayout->addWidget(runButton, 0, 3);
-    controlLayout->addWidget(sendButton, 0, 4);;
+    controlLayout->addWidget(sendButton, 0, 4);
+    //controlLayout->addWidget(cyclicButton, 0, 5);
     controlLayout->addWidget(requestLabel, 2, 0);
     controlLayout->addWidget(requestChBox, 2, 4);
     controlLayout->addWidget(cyclicChBox, 2, 3);
@@ -172,6 +174,8 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
             this, SLOT(sendprocessing()));
+    connect(cyclicButton, SIGNAL(clicked()),
+            this, SLOT(cyclicprocessing()));
 //    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
 //            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
     connect(&pf_adapt, SIGNAL(reply(pf_reply)),
@@ -202,37 +206,38 @@ void Dialog::openport()
 
 }
 
+void Dialog::cyclicprocessing()
+{
+    QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
+    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
+
+    if(cyclicButton->isCheckable())
+    {
+        //cyclicButton->setChecked(false);
+        cyclicButton->setCheckable(false);
+        cyclicButton->setText("Cyclic");
+        emit(pf_adapt.cyclic_stop());
+
+    }
+    else
+    {
+        cyclicButton->setText("Stop");
+        //cyclicButton->setChecked(true);
+        cyclicButton->setCheckable(true);
+        emit(pf_adapt.cyclic_request(data, 0));
+    }
+}
+
 void Dialog::sendprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
-
-    if(sendButton->isCheckable())
+    emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
+    if(Qt::Checked != requestChBox->checkState())
     {
-        sendButton->setCheckable(false);
-        sendButton->setChecked(false);
-        emit(pf_adapt.cyclic_stop());
-    }
-    else
-    {
-        if (Qt::Checked == cyclicChBox->checkState())
-        {
-            //sendButton->setText("Stop");
-            sendButton->setCheckable(true);
-            sendButton->setChecked(true);
-            sendButton->isChecked();
-            emit(pf_adapt.cyclic_request(data, 0));
-        }
-        else
-        {
-            emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
-            if(Qt::Checked != requestChBox->checkState())
-            {
-               QByteArray empty("");
-               emit(reply(pf_reply(empty,data, (qint32)-1)));
-            }
-        }
+       QByteArray empty("");
+       emit(reply(pf_reply(empty,data, (qint32)-1)));
     }
 }
 //void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)

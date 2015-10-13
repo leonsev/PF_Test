@@ -3,7 +3,7 @@
 #include "pf_adaptor.h"
 
 pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent),
-    tr_tx_p(new QThread()), tr_cc_p(new QThread()), tx_p(new pf_transmitter()), cc_req(new pf_cyclic_request())
+    tr_tx_p(new QThread()), tr_cc_p(new QThread()), tx_p(new pf_transmitter()), cc_req(new pf_controller())
 {
     connect(this, SIGNAL(open_serial(QString, QString, qint32)),
             tx_p, SLOT(open_serial(QString, QString, qint32)),  Qt::BlockingQueuedConnection);
@@ -11,8 +11,11 @@ pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent),
     connect(this, SIGNAL(close_serial(void)),
             tx_p, SLOT(close_port(void)),  Qt::BlockingQueuedConnection);
 
+//    connect(this, SIGNAL(request(QByteArray, bool)),
+//            tx_p, SLOT(transmitt(QByteArray, bool)),  Qt::BlockingQueuedConnection);
+
     connect(this, SIGNAL(request(QByteArray, bool)),
-            tx_p, SLOT(transmitt(QByteArray, bool)),  Qt::BlockingQueuedConnection);
+            cc_req, SLOT(single_request(QByteArray, bool)),  Qt::BlockingQueuedConnection);
 
     connect(cc_req, SIGNAL(transmitt(QByteArray, bool)),
             tx_p, SLOT(transmitt(QByteArray, bool)),  Qt::BlockingQueuedConnection);

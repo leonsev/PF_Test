@@ -10,7 +10,7 @@
 #include "pf_transmitter.h"
 #include "pf_receiver.h"
 #include "pf_error.h"
-#include "pf_cyclic_request.h"
+#include "pf_controller.h"
 #include "pf_reply.h"
 
 
@@ -43,7 +43,7 @@ private: //members
     QThread* tr_tx_p;
     QThread* tr_cc_p;
     pf_transmitter* tx_p;
-    pf_cyclic_request* cc_req;
+    pf_controller* cc_req;
 
 };
 

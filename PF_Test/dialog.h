@@ -67,6 +67,7 @@ public:
 private slots:
     void openport();
     void sendprocessing();
+    void cyclicprocessing();
     //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void reply(pf_reply);
     void error(pf_error);
@@ -92,6 +93,7 @@ private:
     QLabel *statusValue;
     QPushButton *runButton;
     QPushButton *sendButton;
+    QPushButton *cyclicButton;
     QStandardItemModel *resultTable;
     QTreeView *resultTableView;
     QStandardItemModel *delayTable;
