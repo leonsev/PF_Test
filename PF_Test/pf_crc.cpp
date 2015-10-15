@@ -2,7 +2,7 @@
 
 unsigned char pf_crc::get(const QByteArray &data)
 {
-    unsigned char crc = START_CHAR;
+    unsigned char crc = 0;
     for (size_t it = 0; it < data.size(); it++)
     {
         crc^=data[it];

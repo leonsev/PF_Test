@@ -124,13 +124,18 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
 
         current_request = tx_data;
 
-        tx_data.append(pf_crc::get(tx_data));
-
         tx_data.prepend(START_CHAR);
+
+        tx_data.append(pf_crc::get(tx_data));
 
         tx_data.append(END_CHAR);
 
-        //QDebug(QtDebugMsg) << "Writing data:" << tx_data;
+        //TODO remove
+        //tx_data.prepend(0xAA);
+        //tx_data.prepend(0xFE);
+        //tx_data.prepend(0xBB);
+
+        QDebug(QtDebugMsg) << "Writing data:" << tx_data;
 
         //tx_port->waitForBytesWritten(-1);
 
