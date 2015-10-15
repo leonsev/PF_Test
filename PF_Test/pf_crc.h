@@ -10,7 +10,9 @@
 class pf_crc
 {
 public:
-    static unsigned char get(const QByteArray& data);
+    static quint8 get(const QByteArray& data);
+    static quint8 gen(const QByteArray& data);
+    static quint8 chk(const QByteArray &data);
 };
 
 #endif // PF_CRC_H

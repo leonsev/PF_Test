@@ -1,17 +1,30 @@
 #include "pf_crc.h"
 
-unsigned char pf_crc::get(const QByteArray &data)
+#define MAGIC_NUMBER 0x55
+
+quint8 pf_crc::get(const QByteArray &data)
 {
-    unsigned char crc = 0;
+    quint8 crc = (data[0] == START_CHAR) ? START_CHAR : 0;
     for (size_t it = 0; it < data.size(); it++)
     {
         crc^=data[it];
     }
 
+    return crc;
+}
+
+quint8 pf_crc::gen(const QByteArray &data)
+{
+    quint8 crc = get(data);
+
     if(START_CHAR == crc || END_CHAR == crc)
     {
-        crc = 0x55;
+        crc = MAGIC_NUMBER;
     }
-
     return crc;
+}
+
+quint8 pf_crc::chk(const QByteArray &data)
+{
+    return gen(data.left(data.size()-1)) ^ data[data.size()-1];
 }

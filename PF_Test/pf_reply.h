@@ -19,6 +19,7 @@ public:
     pf_reply(QByteArray& reply_, QByteArray& request_, qint32 delay_);
     pf_reply(const pf_reply&);
     virtual ~pf_reply();
+    pf_reply operator =(const pf_reply&);
 
 
 

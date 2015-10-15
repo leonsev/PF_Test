@@ -32,7 +32,7 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
                 //Push rubbish data
                 if(it > 0)
                 {
-                    QDebug(QtWarningMsg) << "Unexpected data on a line" << data.left(it);
+                    QDebug(QtWarningMsg) << "Unexpected data on a line 1" << data.left(it);
                     emit(error(pf_error(pf_error::ERR_UNEXPECTED_DATA_RECEIVED)));
 
                     //Reset the data beggin
@@ -47,12 +47,14 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
             if(data[it] == END_CHAR)
             {
                 //Push useful data
-                QDebug(QtDebugMsg) << "A new message received:" << data.left(it);
+                //QDebug(QtDebugMsg) << "A new message received:" << data.mid(1, it-2);
 
-                if(0 == pf_crc::get(data.left(it)))
+                state = WAIT_START;
+
+                if(0 == pf_crc::chk(data.left(it)))
                 {
                     //Return a new message
-                    telegram = data.left(it-1);
+                    telegram = data.mid(1, it-2);
                     //Reset the data beggin
                     data.remove(0,it+1);
                     it = 0;
@@ -61,12 +63,12 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
                 else
                 {
                     //Push useful data
-                    QDebug(QtWarningMsg) << "Wrong CRC!!!";                    
+                    QDebug(QtWarningMsg) << "Wrong CRC!!!" << pf_crc::get(data.left(it)) << data.left(it);
                     emit(error(pf_error(pf_error::ERR_WRONG_CRC)));
                 }
 
 
-                state = WAIT_START;
+
                 //Reset the data beggin
                 data.remove(0,it+1);
                 it = 0;
@@ -74,7 +76,7 @@ bool pf_receiver::process(const QByteArray& in_data, QByteArray& telegram)
             else if(data[it] == START_CHAR)
             {
                 //Push rubbish data
-                QDebug(QtWarningMsg) << "Unexpected data on a line" << data.left(it);
+                QDebug(QtWarningMsg) << "Unexpected data on a line 2" << data.left(it);
                 emit(error(pf_error(pf_error::ERR_UNEXPECTED_DATA_RECEIVED)));
 
                 //Reset the data beggin

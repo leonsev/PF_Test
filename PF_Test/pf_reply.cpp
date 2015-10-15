@@ -43,6 +43,11 @@ pf_reply::~pf_reply()
     }
 }
 
+pf_reply pf_reply::operator =(const pf_reply &obj)
+{
+    return pf_reply(obj);
+}
+
 QByteArray& pf_reply::get_request() const
 {
     return *request;

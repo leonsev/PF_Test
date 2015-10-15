@@ -52,12 +52,16 @@ QT_USE_NAMESPACE
 
 namespace
 {
-const quint8 delay_arr_size = 100;
-quint8 delay_arr[delay_arr_size];
+
 }
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
+    //, reply_counter(0)
+    , error_counter(0)
+    , max_reply(1000)
+    , replies()
+    , delays(0)
     , transactionCount(0)
     , serialPortLabel(new QLabel(tr("Serial port:")))
     , serialRxPortComboBox(new QComboBox())
@@ -74,16 +78,15 @@ Dialog::Dialog(QWidget *parent)
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
     , cyclicButton(new QPushButton(tr("Cyclic")))
-    , resultTable(new QStandardItemModel(300,5))
+    , refreshButton(new QPushButton(tr("Refresh")))
+    , resultTable(new QStandardItemModel(max_reply,5))
     , resultTableView(new QTreeView())
-    , delayTable(new QStandardItemModel(100,2))
+    , delayTable(new QStandardItemModel(1,2))
     , delayTableView(new QTreeView())
     , errorTable(new QStandardItemModel(6,4))
     , errorTableView(new QTreeView())
     , resultBox(new QGroupBox(tr("Result")))
     , controlBox(new QGroupBox(tr("Control")))
-    , reply_counter(0)
-    , error_counter(0)
 {
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialRxPortComboBox->addItem(info.portName());
@@ -136,12 +139,13 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(runButton, 0, 3);
     controlLayout->addWidget(sendButton, 0, 4);
     controlLayout->addWidget(cyclicButton, 0, 5);
+    controlLayout->addWidget(refreshButton, 4, 5);
     controlLayout->addWidget(requestLabel, 2, 0);
     controlLayout->addWidget(requestChBox, 2, 4);
     //controlLayout->addWidget(cyclicChBox, 2, 3);
     controlLayout->addWidget(requestLineEdit, 2, 1);
     controlLayout->addWidget(stalusLabel, 3, 0);
-    controlLayout->addWidget(statusValue, 4, 0);
+    controlLayout->addWidget(statusValue, 4, 0, 4, 4);
     controlBox->setLayout(controlLayout);
 
     QGridLayout *mainLayout = new QGridLayout;
@@ -174,16 +178,25 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(openport()));
     connect(sendButton, SIGNAL(clicked()),
             this, SLOT(sendprocessing()));
+
     connect(cyclicButton, SIGNAL(clicked()),
             this, SLOT(cyclicprocessing()));
+    connect(refreshButton, SIGNAL(clicked()),
+            this, SLOT(refreshprocessing()));
 //    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
 //            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
     connect(&pf_adapt, SIGNAL(reply(pf_reply)),
             this, SLOT(reply(pf_reply)));
-    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
-            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
+//    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
+//            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
+
+    connect(&pf_adapt, SIGNAL(reply(pf_reply)),
+            this, SLOT(reply(pf_reply)));
+
     connect(&pf_adapt, SIGNAL(error(pf_error)),
             this, SLOT(error(pf_error)));
+
+    replies.reserve(max_reply);
 }
 
 Dialog::~Dialog()
@@ -209,7 +222,7 @@ void Dialog::openport()
 void Dialog::cyclicprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
+    //QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
     if(cyclicButton->isCheckable())
     {
@@ -217,6 +230,7 @@ void Dialog::cyclicprocessing()
         cyclicButton->setCheckable(false);
         cyclicButton->setText("Cyclic");
         emit(pf_adapt.cyclic_stop());
+        refreshprocessing();
 
     }
     else
@@ -228,40 +242,51 @@ void Dialog::cyclicprocessing()
     }
 }
 
+void Dialog::refreshprocessing()
+{
+    showDelays();
+    showReplies(*resultTable, max_reply, false);
+}
+
 void Dialog::sendprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
     emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
-    if(Qt::Checked != requestChBox->checkState())
-    {
-       QByteArray empty("");
-       emit(reply(pf_reply(empty,data, (qint32)-1)));
-    }
+//    if(Qt::Checked != requestChBox->checkState())
+//    {
+//       QByteArray empty("");
+//       emit(reply(pf_reply(empty,data, (qint32)-1)));
+//    }
 }
 //void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
 void Dialog::reply(pf_reply reply_)
 {
     //QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
 
-    statusValue->setText(tr("Got reply: ") + QString(reply_.get_reply().toHex()) + tr("\r\n")
-                         + tr("timeout: ") + QString::number(reply_.get_delay()));
+//    statusValue->setText(tr("Got reply: ") + QString(reply_.get_reply().toHex()) + tr("\r\n")
+//                         + tr("timeout: ") + QString::number(reply_.get_delay()));
 
-    resultTable->insertRow(reply_counter);
-    resultTable->setData(resultTable->index(reply_counter%300, 0), QString::number(reply_counter+1));
-    resultTable->setData(resultTable->index(reply_counter%300, 1), QString::number(reply_.get_timestamp().msec()));
-    resultTable->setData(resultTable->index(reply_counter%300, 2), reply_.get_request().toHex());
-    resultTable->setData(resultTable->index(reply_counter%300, 3), reply_.get_reply().toHex());
-    resultTable->setData(resultTable->index(reply_counter%300, 4), QString::number(reply_.get_delay()));
-    reply_counter++;
+    replies.push_back(reply_);
+
+
+    // Increment reply distribution table
+    while(delays.size() <= reply_.get_delay())
+    {
+        delays.push_back(0);
+    }
+    delays[reply_.get_delay()]++;
+    //QDebug(QtDebugMsg) << "Got delay: " << reply_.get_delay() << delays[reply_.get_delay()];
+
+    //showReplies(*resultTable, 1, true);
 }
 
 void Dialog::error(pf_error err)
 {
     QDebug(QtDebugMsg) << "Got error: " << err.get_txt() << " in thread: " << (int)this->thread();
 
-    statusValue->setText(tr("Got error: ") + QString(err.get_txt()));
+//    statusValue->setText(tr("Got error: ") + QString(err.get_txt()));
 
     errorTable->insertRow(error_counter);
     errorTable->setData(errorTable->index(error_counter, 0), QString::number(error_counter+1));
@@ -278,4 +303,40 @@ void Dialog::setControlsEnabled(bool enable)
     serialTxPortComboBox->setEnabled(enable);
     baudRateValue->setEnabled(enable);
     //waitResponseSpinBox->setEnabled(enable);
+}
+
+void Dialog::showReplies(QStandardItemModel& table, quint32 replies_to_show, bool insert)
+{
+    quint32 i = 0;
+    quint32 size = replies.size();
+
+    //QDebug(QtDebugMsg) << "showReplies: " << size << (replies.end() == replies.begin());
+
+    for (QList<pf_reply>::iterator it = replies.end()-1; i < replies_to_show && it >= replies.begin();i++ ,it--)
+    {
+        //QDebug(QtDebugMsg) << "showReplies 2: " << i;
+
+        if(insert){resultTable->insertRow(i);}
+        resultTable->setData(table.index(i, 0), QString::number(size - i));
+        resultTable->setData(table.index(i, 1), it[0].get_timestamp().toString() + QString(" ") + QString::number(it[0].get_timestamp().msec()));
+        resultTable->setData(table.index(i, 2), it[0].get_request().toHex());
+        resultTable->setData(table.index(i, 3), it[0].get_reply().toHex());
+        resultTable->setData(table.index(i, 4), QString::number(it[0].get_delay()));
+    }
+}
+
+void Dialog::showDelays()
+{
+    if(delayTable->rowCount() < delays.size())
+    {
+        delayTable->setRowCount(delays.size());
+    }
+
+    //delayTable->clear();
+    for(quint32 i =0; i < delays.size(); i++)
+    {
+        //QDebug(QtDebugMsg) << "Set delay table: " << QString::number(i) << QString::number(delays[i]);
+        delayTable->setData(delayTable->index(i, 0), QString::number(i));
+        delayTable->setData(delayTable->index(i, 1), QString::number(delays[i]));
+    }
 }

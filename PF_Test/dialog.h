@@ -39,6 +39,7 @@
 #include <QStandardItemModel>
 #include <QGroupBox>
 #include <QTreeView>
+#include <QVector>
 
 #include "pf_adaptor.h"
 #include "pf_error.h"
@@ -68,6 +69,7 @@ private slots:
     void openport();
     void sendprocessing();
     void cyclicprocessing();
+    void refreshprocessing();
     //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void reply(pf_reply);
     void error(pf_error);
@@ -76,9 +78,16 @@ signals:
 
 private:
     void setControlsEnabled(bool enable);
+    void showReplies(QStandardItemModel& table, quint32 replies_to_show, bool insert);
+    void showDelays();
 
 private:
-    int transactionCount;
+    int transactionCount;    
+    quint32 error_counter;
+    quint32 const max_reply;
+    QList<pf_reply> replies;
+    QVector<quint32> delays;
+
     QLabel *serialPortLabel;
     QComboBox *serialRxPortComboBox;
     QComboBox *serialTxPortComboBox;
@@ -94,6 +103,7 @@ private:
     QPushButton *runButton;
     QPushButton *sendButton;
     QPushButton *cyclicButton;
+    QPushButton *refreshButton;
     QStandardItemModel *resultTable;
     QTreeView *resultTableView;
     QStandardItemModel *delayTable;
@@ -104,8 +114,7 @@ private:
     QGroupBox *controlBox;
     pf_adaptor pf_adapt;
 
-    quint32 reply_counter;
-    quint32 error_counter;
+    //quint32 reply_counter;
 
     //MasterThread thread;
 };

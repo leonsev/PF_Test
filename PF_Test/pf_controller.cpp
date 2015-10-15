@@ -30,7 +30,7 @@ void pf_controller::start()
 {
     if (NULL == timer)
     {
-        QDebug(QtDebugMsg) << "Create timer";
+        //QDebug(QtDebugMsg) << "Create timer";
         timer = new QTimer();
         connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
     }
@@ -43,7 +43,7 @@ void pf_controller::stop()
     state = pf_controller::STOP;
     if(NULL != timer)
     {
-        QDebug(QtDebugMsg) << "cc delete timer";
+        //QDebug(QtDebugMsg) << "cc delete timer";
         timer->stop();
         delete(timer);
         timer = NULL;
@@ -52,7 +52,7 @@ void pf_controller::stop()
 
 void pf_controller::set(QByteArray request_sequence_, quint32 period_)
 {
-    QDebug(QtDebugMsg) << "Got cc request: Tr:" << this->thread();
+    //QDebug(QtDebugMsg) << "Got cc request: Tr:" << this->thread();
     request_sequence = request_sequence_;
     period = period_;
     start();

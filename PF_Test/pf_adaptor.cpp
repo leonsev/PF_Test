@@ -45,7 +45,7 @@ pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent),
     tr_tx_p->start();
     tr_cc_p->start();
 
-    tr_cc_p->setPriority(QThread::HighPriority);
+    //tr_cc_p->setPriority(QThread::HighPriority);
     tr_tx_p->setPriority(QThread::TimeCriticalPriority);
 }
 
