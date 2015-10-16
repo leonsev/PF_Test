@@ -185,8 +185,8 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(refreshprocessing()));
 //    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
 //            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
-    connect(&pf_adapt, SIGNAL(reply(pf_reply)),
-            this, SLOT(reply(pf_reply)));
+//    connect(&pf_adapt, SIGNAL(reply(pf_reply)),
+//            this, SLOT(reply(pf_reply)));
 //    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
 //            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
 
