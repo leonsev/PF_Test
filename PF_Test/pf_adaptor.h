@@ -28,7 +28,7 @@ signals:
     void open_serial(QString, QString, qint32 /*baud_rate*/);    
     void close_serial(void);
 
-    void cyclic_request(QByteArray, quint32 /*period*/);
+    void cyclic_request(QByteArray, quint32 /*period*/ , quint32 /*pause*/, bool /*wait_reply*/);
     void cyclic_stop();
 
 
@@ -43,7 +43,7 @@ private: //members
     QThread* tr_tx_p;
     QThread* tr_cc_p;
     pf_transmitter* tx_p;
-    pf_controller* cc_req;
+    pf_controller* controller_p;
 
 };
 

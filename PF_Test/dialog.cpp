@@ -58,11 +58,11 @@ namespace
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent)
     //, reply_counter(0)
+    , transactionCount(0)
     , error_counter(0)
     , max_reply(1000)
     , replies()
     , delays(0)
-    , transactionCount(0)
     , serialPortLabel(new QLabel(tr("Serial port:")))
     , serialRxPortComboBox(new QComboBox())
     , serialTxPortComboBox(new QComboBox())
@@ -238,7 +238,7 @@ void Dialog::cyclicprocessing()
         cyclicButton->setText("Stop");
         //cyclicButton->setChecked(true);
         cyclicButton->setCheckable(true);
-        emit(pf_adapt.cyclic_request(data, 0));
+        emit(pf_adapt.cyclic_request(data, 500, 0, false));
     }
 }
 
@@ -333,7 +333,7 @@ void Dialog::showDelays()
     }
 
     //delayTable->clear();
-    for(quint32 i =0; i < delays.size(); i++)
+    for(int i =0; i < delays.size(); i++)
     {
         //QDebug(QtDebugMsg) << "Set delay table: " << QString::number(i) << QString::number(delays[i]);
         delayTable->setData(delayTable->index(i, 0), QString::number(i));

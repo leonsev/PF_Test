@@ -10,7 +10,7 @@ const QString err2txt_data[pf_error::ERR_TOTAL] =
     "ERR_UNEXPECTED_DATA_RECEIVED",
     "ERR_WRONG_CRC",
     "ERR_NO_ECHO",
-    "ERR_NO_REPLY"
+    "ERR_NO_REPLY",
     "ERR_WRONG_ECHO"
 };
 
