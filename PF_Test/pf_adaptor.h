@@ -28,8 +28,10 @@ signals:
     void open_serial(QString, QString, qint32 /*baud_rate*/);    
     void close_serial(void);
 
-    void cyclic_request(QByteArray, quint32 /*period*/ , quint32 /*pause*/, bool /*wait_reply*/);
-    void cyclic_stop();
+    void start_cyclic();
+    void reset_cyclic();
+    void add_cyclic(QByteArray, quint32 /*period*/ , quint32 /*pause*/, bool /*wait_reply*/);
+    void stop_cyclic();
 
 
     /* out */

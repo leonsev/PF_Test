@@ -32,11 +32,17 @@ pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent),
     connect(tx_p ,SIGNAL(ready()),
             controller_p,SLOT(next_request()), Qt::QueuedConnection);
 
-    connect(this ,SIGNAL(cyclic_request(QByteArray, quint32, quint32, bool)),
+    connect(this ,SIGNAL(add_cyclic(QByteArray, quint32, quint32, bool)),
             controller_p,SLOT(add(QByteArray, quint32, quint32, bool)),  Qt::QueuedConnection);
 
-    connect(this ,SIGNAL(cyclic_stop()),
+    connect(this ,SIGNAL(stop_cyclic()),
             controller_p,SLOT(stop()),  Qt::BlockingQueuedConnection);
+
+    connect(this ,SIGNAL(reset_cyclic()),
+            controller_p,SLOT(reset()),  Qt::BlockingQueuedConnection);
+
+    connect(this ,SIGNAL(start_cyclic()),
+            controller_p,SLOT(start()),  Qt::BlockingQueuedConnection);
 
     //TODO Can work in existing thread
     tx_p->moveToThread(tr_tx_p);
@@ -53,7 +59,7 @@ pf_adaptor::~pf_adaptor()
 {
     QDebug(QtDebugMsg) << "~pf_adaptor()";
 
-    emit(this->cyclic_stop());
+    emit(this->stop_cyclic());
     emit(this->close_serial());
 
     delete(tx_p);

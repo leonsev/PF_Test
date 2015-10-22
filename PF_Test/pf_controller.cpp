@@ -29,36 +29,24 @@ void pf_controller::next_request()
 
 void pf_controller::start()
 {
-//    if (NULL == timer)
-//    {
-//        //QDebug(QtDebugMsg) << "Create timer";
-//        timer = new QTimer();
-//        connect(timer, SIGNAL(timeout()), this, SLOT(timeout()));
-//    }
-//    state = pf_controller::READY;
-
     stop();
-    for(requests_list_t::iterator it = requests.begin(); it < requests.end(); it++)
+    if(requests.size() != 0)
     {
-        it->start_timer();
+        for(requests_list_t::iterator it = requests.begin(); it < requests.end(); it++)
+        {
+            it->start_timer();
+        }
+    }
+    else
+    {
+        QDebug(QtWarningMsg) << "No requests added";
     }
     state = RUN;
     try_send();
-
 }
 
 void pf_controller::stop()
 {
-//    state = pf_controller::STOP;
-//    if(NULL != timer)
-//    {
-//        //QDebug(QtDebugMsg) << "cc delete timer";
-//        timer->stop();
-//        delete(timer);
-//        timer = NULL;
-//    }
-
-
     for(requests_list_t::iterator it = requests.begin(); it < requests.end(); it++)
     {
         it->stop_timer();
@@ -67,7 +55,6 @@ void pf_controller::stop()
     requests_queue.clear();
     state = STOP;
 }
-
 
 void pf_controller::add(QByteArray request_sequence_, quint32 period_, quint32 pause_, bool wait_reply_)
 {
@@ -98,12 +85,8 @@ void pf_controller::add(QByteArray request_sequence_, quint32 period_, quint32 p
         requests[i].start_timer();
     }
 
-
-//    for(requests_list_t::iterator it = requests.begin(); it < requests.end(); it++)
-//    {
-//        connect(it->ptimer, SIGNAL(timeout()), this, SLOT(timeout());
-//    }
-    start();
+    //Why do I need to start cyclic on add command???
+    //start();
 }
 
 void pf_controller::reset(void)
@@ -116,27 +99,15 @@ void pf_controller::reset(void)
     requests.clear();
 }
 
-
 void pf_controller::single_request(QByteArray request_sequence_, bool request_, quint32 pause_)
 {
-//    single_request_m = request_sequence_;
-//    single_request_type = request_;
-//    try_send();
+    //todo implement
 }
 
 void pf_controller::timeout()
 {
-//    //QDebug(QtDebugMsg) << "cc timeout";
-//    timeout_ready = true;
-//    timer->stop();
-//    if(READY == state)
-//    {
-//        try_send();
-//    }
-
-    if(RUN == state)
-    {
-
+    //if(RUN == state)
+    //{
         //When timeout occures we try to push_back request in a request queue.
         //The request will be added in a queue only if there is no similar request in a queue
         bool timeout_source_found = false;
@@ -151,11 +122,13 @@ void pf_controller::timeout()
                     if(rq_it[0] == &(request_it[0]))
                     {
                         request_is_in_a_queue = true;
+                        QDebug(QtDebugMsg) << "Request is already in a queue" << request_it[0].request_data;
                         break;
                     }
                 }
                 if(!request_is_in_a_queue)
                 {
+                    QDebug(QtDebugMsg) << "Add request in a queue" << request_it[0].request_data;
                     requests_queue.push_back(&(request_it[0]));
                 }
                 // Restart timer
@@ -172,38 +145,33 @@ void pf_controller::timeout()
         {
             QDebug(QtWarningMsg) << "No reason for timeout";
         }
+    //}
+}
+
+void pf_controller::pause_off(void)
+{
+    QDebug(QtDebugMsg) << "Pause off";
+    if(PAUSE == state)
+    {
+        state = RUN;
+        try_send();
     }
 }
 
-
 void pf_controller::try_send()
 {
-//    //QDebug(QtDebugMsg) << "Try send";
-//    if(true == tx_ready && true == timeout_ready)
-//    {
-//        tx_ready = false;
-//        if (0 != period) {timer->start(period); timeout_ready = false;}
-//        if(single_request_m.size() > 0)
-//        {
-//            emit(transmitt(single_request_m,single_request_type));
-//            single_request_m.clear();
-//        }
-//        else
-//        {
-//            emit(transmitt(request_sequence,true));
-//        }
-//    }
-//    else
-//    {
-//        //QDebug(QtDebugMsg) << "Not ready to send:" << tx_ready << timeout_ready;
-//    }
-
-
+    QDebug(QtDebugMsg) << "try_send";
     if(RUN == state && true == tx_ready && !requests_queue.isEmpty())
     {
         if(NULL != requests_queue[0])
         {
+            QDebug(QtDebugMsg) << "emit(transmitt" << requests_queue[0]->request_data;
             emit(transmitt(requests_queue[0]->request_data,requests_queue[0]->wait_reply));
+            if(requests_queue[0]->pause > 0)
+            {
+                state = PAUSE;
+                QTimer::singleShot(requests_queue[0]->pause, this, SLOT(pause_off()));
+            }
             requests_queue.removeFirst();
             tx_ready = false;
         }
@@ -213,7 +181,6 @@ void pf_controller::try_send()
         }
     }
 }
-
 
 pf_controller::request_t::request_t(QByteArray request_data_, quint32 period_, quint32 pause_, bool wait_reply_) :
     request_data(request_data_), period(period_ < 5 ? 5 : period_),
@@ -234,3 +201,5 @@ pf_controller::request_t pf_controller::request_t::operator=(const pf_controller
     QDebug(QtDebugMsg) << "Copy = request_t";
     return request_t(obj);
 }
+
+pf_controller::request_t::~request_t(){QDebug(QtDebugMsg) << "Destroq request_t:" << this->request_data;}

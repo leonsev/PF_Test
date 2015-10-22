@@ -73,12 +73,16 @@ Dialog::Dialog(QWidget *parent)
     , requestChBox(new QCheckBox(tr("request")))
     , cyclicChBox(new QCheckBox(tr("cyclic")))
     , requestLineEdit(new QLineEdit(tr("FD 0E")))
+    , periodLineEdit(new QLineEdit(tr("50")))
+    , pauseLineEdit(new QLineEdit(tr("0")))
     , stalusLabel(new QLabel(tr("Status")))
     , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
     , cyclicButton(new QPushButton(tr("Cyclic")))
     , refreshButton(new QPushButton(tr("Refresh")))
+    , addButton(new QPushButton(tr("Add cyclic")))
+    , resetButton(new QPushButton(tr("Reset cyclic")))
     , resultTable(new QStandardItemModel(max_reply,5))
     , resultTableView(new QTreeView())
     , delayTable(new QStandardItemModel(1,2))
@@ -140,10 +144,14 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(sendButton, 0, 4);
     controlLayout->addWidget(cyclicButton, 0, 5);
     controlLayout->addWidget(refreshButton, 4, 5);
+    controlLayout->addWidget(addButton, 4, 6);
+    controlLayout->addWidget(resetButton, 4, 7);
     controlLayout->addWidget(requestLabel, 2, 0);
     controlLayout->addWidget(requestChBox, 2, 4);
     //controlLayout->addWidget(cyclicChBox, 2, 3);
     controlLayout->addWidget(requestLineEdit, 2, 1);
+    controlLayout->addWidget(periodLineEdit, 2, 2);
+    controlLayout->addWidget(pauseLineEdit, 2, 3);
     controlLayout->addWidget(stalusLabel, 3, 0);
     controlLayout->addWidget(statusValue, 4, 0, 4, 4);
     controlBox->setLayout(controlLayout);
@@ -183,6 +191,10 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(cyclicprocessing()));
     connect(refreshButton, SIGNAL(clicked()),
             this, SLOT(refreshprocessing()));
+    connect(addButton, SIGNAL(clicked()),
+            this, SLOT(addprocessing()));
+    connect(resetButton, SIGNAL(clicked()),
+            this, SLOT(resetprocessing()));
 //    connect(&pf_adapt, SIGNAL(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )),
 //            this, SLOT(reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ )));
 //    connect(&pf_adapt, SIGNAL(reply(pf_reply)),
@@ -221,7 +233,7 @@ void Dialog::openport()
 
 void Dialog::cyclicprocessing()
 {
-    QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
+    //QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     //QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
 
     if(cyclicButton->isCheckable())
@@ -229,7 +241,7 @@ void Dialog::cyclicprocessing()
         //cyclicButton->setChecked(false);
         cyclicButton->setCheckable(false);
         cyclicButton->setText("Cyclic");
-        emit(pf_adapt.cyclic_stop());
+        emit(pf_adapt.stop_cyclic());
         refreshprocessing();
 
     }
@@ -238,7 +250,8 @@ void Dialog::cyclicprocessing()
         cyclicButton->setText("Stop");
         //cyclicButton->setChecked(true);
         cyclicButton->setCheckable(true);
-        emit(pf_adapt.cyclic_request(data, 500, 0, false));
+        QDebug(QtDebugMsg) << "Start cyclic";
+        emit(pf_adapt.start_cyclic());
     }
 }
 
@@ -248,10 +261,23 @@ void Dialog::refreshprocessing()
     showReplies(*resultTable, max_reply, false);
 }
 
+void Dialog::addprocessing()
+{
+    QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
+    QDebug(QtDebugMsg) << "Executing Dialog::addprocessing slot";
+    emit(pf_adapt.add_cyclic(data, periodLineEdit->text().toInt(), pauseLineEdit->text().toInt(), Qt::Checked == requestChBox->checkState()));
+}
+
+void Dialog::resetprocessing()
+{
+    QDebug(QtDebugMsg) << "Reset cyclic";
+    emit(pf_adapt.reset_cyclic());
+}
+
 void Dialog::sendprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    QDebug(QtDebugMsg) << "Executing Dialog::transmitt slot. Thread:" << this->thread();
+    QDebug(QtDebugMsg) << "Executing Dialog::sendprocessing slot";
 
     emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
 //    if(Qt::Checked != requestChBox->checkState())

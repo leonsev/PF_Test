@@ -70,6 +70,8 @@ private slots:
     void sendprocessing();
     void cyclicprocessing();
     void refreshprocessing();
+    void addprocessing();
+    void resetprocessing();
     //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void reply(pf_reply);
     void error(pf_error);
@@ -98,12 +100,16 @@ private:
     QCheckBox* requestChBox;
     QCheckBox* cyclicChBox;
     QLineEdit *requestLineEdit;
+    QLineEdit *periodLineEdit;
+    QLineEdit *pauseLineEdit;
     QLabel *stalusLabel;
     QLabel *statusValue;
     QPushButton *runButton;
     QPushButton *sendButton;
     QPushButton *cyclicButton;
     QPushButton *refreshButton;
+    QPushButton *addButton;
+    QPushButton *resetButton;
     QStandardItemModel *resultTable;
     QTreeView *resultTableView;
     QStandardItemModel *delayTable;

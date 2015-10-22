@@ -31,7 +31,7 @@ private: //types
         void stop_timer() {ptimer->stop();}
         bool is_timeout() {return (ptimer->remainingTime() == 0) || (ptimer->remainingTime() == -1);}
 
-        ~request_t(){/*delete ptimer;*/}
+        ~request_t();
 
         QByteArray request_data;
         quint32 period;
@@ -51,6 +51,7 @@ public slots:
     void single_request(QByteArray request_sequence_, bool request_, quint32 pause_ = 0);
 private slots:
     void timeout();
+    void pause_off(void);
 
 private: //methods
     void try_send(void);
@@ -60,6 +61,7 @@ private: //members
     {
         INIT =0,
         RUN,
+        PAUSE,
         STOP
     }state_t;
 

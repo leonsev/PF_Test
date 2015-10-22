@@ -119,8 +119,8 @@ void pf_transmitter::transmitt(QByteArray tx_data, bool request)
             setState(WAIT_ECHO_BROADCAST);
         }
 
-        //TODO remove
-        //setState(WAIT_REPLY);
+        //TODO remove. Eneble for
+        setState(WAIT_REPLY);
 
         current_request = tx_data;
 
