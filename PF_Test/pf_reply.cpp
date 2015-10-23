@@ -6,7 +6,7 @@ pf_reply::pf_reply()
 }
 
 pf_reply::pf_reply(QByteArray& reply_, pf_reply::reply_t type_) :
-    reply(new QByteArray(reply_)), request(NULL), type(type_), delay(-1), timestamp(new QTime(QTime::currentTime()))
+    reply(new QByteArray(reply_)), request(new QByteArray()), type(type_), delay(-1), timestamp(new QTime(QTime::currentTime()))
 {
 
 }
