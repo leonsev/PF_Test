@@ -48,6 +48,10 @@
 
 #include <QtSerialPort/QSerialPortInfo>
 
+#include "3rdparty/qtcsv/src/include/stringdata.h"
+#include "3rdparty/qtcsv/src/include/reader.h"
+#include "3rdparty/qtcsv/src/include/writer.h"
+
 QT_USE_NAMESPACE
 
 namespace
@@ -280,32 +284,21 @@ void Dialog::sendprocessing()
     QDebug(QtDebugMsg) << "Executing Dialog::sendprocessing slot";
 
     emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
-//    if(Qt::Checked != requestChBox->checkState())
-//    {
-//       QByteArray empty("");
-//       emit(reply(pf_reply(empty,data, (qint32)-1)));
-//    }
 }
-//void Dialog::reply(QByteArray reply, QByteArray request, qint32 time)
+
 void Dialog::reply(pf_reply reply_)
 {
-    //QDebug(QtDebugMsg) << "Got reply: " << reply << " timeout: " << time << " in thread: " << (int)this->thread();;
-
-//    statusValue->setText(tr("Got reply: ") + QString(reply_.get_reply().toHex()) + tr("\r\n")
-//                         + tr("timeout: ") + QString::number(reply_.get_delay()));
-
     replies.push_back(reply_);
 
-
-    // Increment reply distribution table
-    while(delays.size() <= reply_.get_delay())
+    if(reply_.get_type() == pf_reply::TYPE_REQUEST)
     {
-        delays.push_back(0);
+        // Increment reply distribution table
+        while(delays.size() <= reply_.get_delay())
+        {
+            delays.push_back(0);
+        }
+        delays[reply_.get_delay()]++;
     }
-    delays[reply_.get_delay()]++;
-    //QDebug(QtDebugMsg) << "Got delay: " << reply_.get_delay() << delays[reply_.get_delay()];
-
-    //showReplies(*resultTable, 1, true);
 }
 
 void Dialog::error(pf_error err)
@@ -366,3 +359,8 @@ void Dialog::showDelays()
         delayTable->setData(delayTable->index(i, 1), QString::number(delays[i]));
     }
 }
+
+//void Dialog::writeCSV()
+//{
+
+//}

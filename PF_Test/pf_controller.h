@@ -18,7 +18,7 @@ public:
 
 private: //types
 
-    struct request_t
+    struct request_t : QObject
     {
         request_t(QByteArray request_data_, quint32 period_,
                   quint32 pause_, bool wait_reply_);
@@ -54,7 +54,7 @@ private slots:
     void pause_off(void);
 
 private: //methods
-    void try_send(void);
+    void try_send(QPointer<request_t> forse_request = NULL);
 
 private: //members
     typedef enum
@@ -75,7 +75,7 @@ private: //members
     bool timeout_ready;
 
     typedef QList<request_t> requests_list_t;
-    typedef QList<request_t*> requests_queue_t;
+    typedef QList< QPointer<request_t> > requests_queue_t;
 
     requests_list_t requests;
     requests_queue_t requests_queue;

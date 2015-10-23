@@ -221,6 +221,8 @@ void pf_transmitter::data_received()
                     }
                     else
                     {
+                        //in case of broadcast message reply the echo
+                        emit(reply(pf_reply(telegram)));
                         setState(READY);
                     }
                 }

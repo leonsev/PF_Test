@@ -101,7 +101,8 @@ void pf_controller::reset(void)
 
 void pf_controller::single_request(QByteArray request_sequence_, bool request_, quint32 pause_)
 {
-    //todo implement
+    //todo implement    
+    try_send(new pf_controller::request_t(request_sequence_, 0, pause_, request_));
 }
 
 void pf_controller::timeout()
@@ -158,26 +159,34 @@ void pf_controller::pause_off(void)
     }
 }
 
-void pf_controller::try_send()
+void pf_controller::try_send(QPointer<request_t> forse_request)
 {
     QDebug(QtDebugMsg) << "try_send";
-    if(RUN == state && true == tx_ready && !requests_queue.isEmpty())
+
+    if(NULL != forse_request)
     {
-        if(NULL != requests_queue[0])
+        requests_queue.push_front(forse_request);
+    }
+    if(RUN == state || (NULL != forse_request && STOP == state))
+    {
+        if(true == tx_ready && !requests_queue.isEmpty())
         {
-            QDebug(QtDebugMsg) << "emit(transmitt" << requests_queue[0]->request_data;
-            emit(transmitt(requests_queue[0]->request_data,requests_queue[0]->wait_reply));
-            if(requests_queue[0]->pause > 0)
+            if(NULL != requests_queue[0])
             {
-                state = PAUSE;
-                QTimer::singleShot(requests_queue[0]->pause, this, SLOT(pause_off()));
+                QDebug(QtDebugMsg) << "emit(transmitt" << requests_queue[0]->request_data;
+                emit(transmitt(requests_queue[0]->request_data,requests_queue[0]->wait_reply));
+                if(requests_queue[0]->pause > 0)
+                {
+                    state = PAUSE;
+                    QTimer::singleShot(requests_queue[0]->pause, this, SLOT(pause_off()));
+                }
+                requests_queue.removeFirst();
+                tx_ready = false;
             }
-            requests_queue.removeFirst();
-            tx_ready = false;
-        }
-        else
-        {
-            QDebug(QtWarningMsg) << "Null pointer in try_send";
+            else
+            {
+                QDebug(QtWarningMsg) << "Null pointer in try_send";
+            }
         }
     }
 }
