@@ -48,9 +48,6 @@
 
 #include <QtSerialPort/QSerialPortInfo>
 
-#include "3rdparty/qtcsv/src/include/stringdata.h"
-#include "3rdparty/qtcsv/src/include/reader.h"
-#include "3rdparty/qtcsv/src/include/writer.h"
 
 QT_USE_NAMESPACE
 
@@ -67,20 +64,21 @@ Dialog::Dialog(QWidget *parent)
     , max_reply(1000)
     , replies()
     , delays(0)
-    , serialPortLabel(new QLabel(tr("Serial port:")))
+    , serialTxPortLabel(new QLabel(tr("Tx Port:")))
     , serialRxPortComboBox(new QComboBox())
     , serialTxPortComboBox(new QComboBox())
-    , baudRateLabel(new QLabel(tr("Baud rate:")))
+    , serialRxPortLabel(new QLabel(tr("Rx Port:")))
     //, waitResponseSpinBox(new QSpinBox())
     , baudRateValue(new QComboBox())
     , requestLabel(new QLabel(tr("Message:")))
     , requestChBox(new QCheckBox(tr("request")))
-    , cyclicChBox(new QCheckBox(tr("cyclic")))
+   // , cyclicChBox(new QCheckBox(tr("cyclic")))
     , requestLineEdit(new QLineEdit(tr("FD 0E")))
     , periodLineEdit(new QLineEdit(tr("50")))
     , pauseLineEdit(new QLineEdit(tr("0")))
-    , stalusLabel(new QLabel(tr("Status")))
-    , statusValue(new QLabel(tr("Not running")))
+    , periodLabel(new QLabel(tr("Period:")))
+    , pauseLabel(new QLabel(tr("Pause:")))
+   // , statusValue(new QLabel(tr("Not running")))
     , runButton(new QPushButton(tr("Open")))
     , sendButton(new QPushButton(tr("Send")))
     , cyclicButton(new QPushButton(tr("Cyclic")))
@@ -139,25 +137,26 @@ Dialog::Dialog(QWidget *parent)
     resultBox->setLayout(resultLayout);
 
     QGridLayout *controlLayout = new QGridLayout;
-    controlLayout->addWidget(serialPortLabel, 0, 0);
-    controlLayout->addWidget(serialRxPortComboBox, 0, 1);
-    controlLayout->addWidget(serialTxPortComboBox, 0, 2);
-    controlLayout->addWidget(baudRateLabel, 1, 0);
-    controlLayout->addWidget(baudRateValue, 1, 1);
-    controlLayout->addWidget(runButton, 0, 3);
-    controlLayout->addWidget(sendButton, 0, 4);
-    controlLayout->addWidget(cyclicButton, 0, 5);
-    controlLayout->addWidget(refreshButton, 4, 5);
-    controlLayout->addWidget(addButton, 4, 6);
-    controlLayout->addWidget(resetButton, 4, 7);
-    controlLayout->addWidget(requestLabel, 2, 0);
-    controlLayout->addWidget(requestChBox, 2, 4);
+    controlLayout->addWidget(serialTxPortLabel, 0, 0);
+    controlLayout->addWidget(serialRxPortLabel, 1, 0);
+    controlLayout->addWidget(serialRxPortComboBox, 1, 1);
+    controlLayout->addWidget(serialTxPortComboBox, 0, 1);
+    controlLayout->addWidget(baudRateValue, 2, 1);
+    controlLayout->addWidget(runButton, 3, 1);
+    controlLayout->addWidget(sendButton, 0, 5);
+    controlLayout->addWidget(cyclicButton, 0, 6);
+    controlLayout->addWidget(refreshButton, 7, 6);
+    controlLayout->addWidget(addButton, 1, 5);
+    controlLayout->addWidget(resetButton, 1, 6);
+    controlLayout->addWidget(requestLabel, 0, 2);
+    controlLayout->addWidget(requestChBox, 0, 4);
     //controlLayout->addWidget(cyclicChBox, 2, 3);
-    controlLayout->addWidget(requestLineEdit, 2, 1);
-    controlLayout->addWidget(periodLineEdit, 2, 2);
+    controlLayout->addWidget(requestLineEdit, 0, 3);
+    controlLayout->addWidget(periodLineEdit, 1, 3);
     controlLayout->addWidget(pauseLineEdit, 2, 3);
-    controlLayout->addWidget(stalusLabel, 3, 0);
-    controlLayout->addWidget(statusValue, 4, 0, 4, 4);
+    controlLayout->addWidget(pauseLabel, 2, 2);
+    controlLayout->addWidget(periodLabel, 1, 2);
+    //controlLayout->addWidget(statusValue, 7, 1);
     controlBox->setLayout(controlLayout);
 
     QGridLayout *mainLayout = new QGridLayout;
@@ -223,10 +222,10 @@ Dialog::~Dialog()
 void Dialog::openport()
 {
     setControlsEnabled(false);
-    statusValue->setText(tr("Status: Running, connected to port %1.")
-                         .arg(serialRxPortComboBox->currentText() +
-                              " " +
-                              serialTxPortComboBox->currentText()));
+//    statusValue->setText(tr("Status: Running, connected to port %1.")
+//                         .arg(serialRxPortComboBox->currentText() +
+//                              " " +
+//                              serialTxPortComboBox->currentText()));
 
     emit (pf_adapt.open_serial(
                 serialRxPortComboBox->currentText(),
@@ -268,7 +267,7 @@ void Dialog::refreshprocessing()
 void Dialog::addprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    QDebug(QtDebugMsg) << "Executing Dialog::addprocessing slot";
+    //QDebug(QtDebugMsg) << "Executing Dialog::addprocessing slot";
     emit(pf_adapt.add_cyclic(data, periodLineEdit->text().toInt(), pauseLineEdit->text().toInt(), Qt::Checked == requestChBox->checkState()));
 }
 
@@ -281,7 +280,7 @@ void Dialog::resetprocessing()
 void Dialog::sendprocessing()
 {
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
-    QDebug(QtDebugMsg) << "Executing Dialog::sendprocessing slot";
+    //QDebug(QtDebugMsg) << "Executing Dialog::sendprocessing slot";
 
     emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
 }
@@ -359,8 +358,3 @@ void Dialog::showDelays()
         delayTable->setData(delayTable->index(i, 1), QString::number(delays[i]));
     }
 }
-
-//void Dialog::writeCSV()
-//{
-
-//}

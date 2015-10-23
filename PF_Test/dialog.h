@@ -90,20 +90,21 @@ private:
     QList<pf_reply> replies;
     QVector<quint32> delays;
 
-    QLabel *serialPortLabel;
+    QLabel *serialTxPortLabel;
     QComboBox *serialRxPortComboBox;
     QComboBox *serialTxPortComboBox;
-    QLabel *baudRateLabel;
+    QLabel *serialRxPortLabel;
     QComboBox *baudRateValue;
     //QSpinBox *waitResponseSpinBox;
     QLabel *requestLabel;
     QCheckBox* requestChBox;
-    QCheckBox* cyclicChBox;
+   // QCheckBox* cyclicChBox;
     QLineEdit *requestLineEdit;
     QLineEdit *periodLineEdit;
     QLineEdit *pauseLineEdit;
-    QLabel *stalusLabel;
-    QLabel *statusValue;
+    QLabel *periodLabel;
+    QLabel *pauseLabel;
+   // QLabel *statusValue;
     QPushButton *runButton;
     QPushButton *sendButton;
     QPushButton *cyclicButton;

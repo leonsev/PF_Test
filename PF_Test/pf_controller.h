@@ -59,10 +59,9 @@ private: //methods
 private: //members
     typedef enum
     {
-        INIT =0,
+        STOP = 0,
         RUN,
-        PAUSE,
-        STOP
+        PAUSE
     }state_t;
 
     QByteArray request_sequence;
