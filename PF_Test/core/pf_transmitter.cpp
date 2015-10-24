@@ -23,7 +23,7 @@ bool setup_port (QSerialPort& port, qint32 baud_rate)
 }
 
 pf_transmitter::pf_transmitter(QObject *parent) : QObject(parent),
-    tx_port(NULL), rx_port(NULL), timer(NULL), max_timeout(50),
+    tx_port(NULL), rx_port(NULL), timer(NULL), max_timeout(200),
     state(INIT)
 {
     connect(&pf_rec,SIGNAL(error(pf_error)),this,SIGNAL(error(pf_error)), Qt::QueuedConnection);

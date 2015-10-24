@@ -26,11 +26,12 @@ public:
     void set_request(QByteArray& request_);
     void set_delay(qint32 delay_);
 
-    QByteArray& get_request(void) const;
-    QByteArray& get_reply(void) const;
+    const QByteArray& get_request(void) const;
+    const QByteArray& get_reply(void) const;
     pf_reply::reply_t get_type(void) const;
     qint32 get_delay(void) const;
-    QTime& get_timestamp(void) const;
+    const QTime& get_timestamp(void) const;
+    const QString get_timestamp_str();
 
 
 signals:
@@ -38,11 +39,11 @@ signals:
 public slots:
 
 private: // members
-    QByteArray* reply;
-    QByteArray* request;
+    QByteArray reply;
+    QByteArray request;
     pf_reply::reply_t type;
     qint32 delay;
-    QTime* timestamp;
+    QTime timestamp;
 };
 
 #endif // PF_REPLY_H

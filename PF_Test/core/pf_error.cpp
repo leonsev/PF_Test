@@ -3,6 +3,8 @@
 
 #include "pf_error.h"
 
+namespace
+{
 const QString err2txt_data[pf_error::ERR_TOTAL] =
 {
     "ERR_NO",
@@ -13,16 +15,16 @@ const QString err2txt_data[pf_error::ERR_TOTAL] =
     "ERR_NO_REPLY",
     "ERR_WRONG_ECHO"
 };
+}
 
-
-pf_error::pf_error(pf_error::error_t err_no_): err_no(err_no_)
+pf_error::pf_error(pf_error::error_t err_no_): err_no(err_no_), time(QTime::currentTime())
 {
 
 }
 
-pf_error::pf_error(const pf_error &obj)
+pf_error::pf_error(const pf_error &obj) : err_no(obj.err_no), time(obj.time)
 {
-    this->err_no = obj.get_err_no();;
+
 }
 
 pf_error::~pf_error()
@@ -38,6 +40,16 @@ pf_error::error_t pf_error::get_err_no() const
 const QString &pf_error::get_txt()
 {
     return err2txt(err_no);
+}
+
+const QTime pf_error::get_timestamp()
+{
+    return time;
+}
+
+const QString pf_error::get_timestamp_str()
+{
+    return (time.toString() + QString(" ") + QString::number(time.msec()));
 }
 
 const QString &pf_error::err2txt(pf_error::error_t err_no_)

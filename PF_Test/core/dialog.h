@@ -45,6 +45,9 @@
 #include "pf_error.h"
 #include "pf_reply.h"
 
+#include "stringdata.h"
+#include "writer.h"
+
 QT_BEGIN_NAMESPACE
 
 class QLabel;
@@ -75,13 +78,16 @@ private slots:
     //void reply(QByteArray /*reply*/, QByteArray /*request*/, qint32 /*time*/ );
     void reply(pf_reply);
     void error(pf_error);
+    void writeCSV();
 
 signals:
 
 private:
     void setControlsEnabled(bool enable);
-    void showReplies(QStandardItemModel& table, quint32 replies_to_show, bool insert);
+    void replies2StdIdtemModel(QStandardItemModel& table, quint32 replies_to_show);
     void showDelays();
+    void setSCVBlock(QtCSV::StringData& strData, const QStandardItemModel& resTable, const QString& tableName);
+
 
 private:
     int transactionCount;    
@@ -111,6 +117,7 @@ private:
     QPushButton *refreshButton;
     QPushButton *addButton;
     QPushButton *resetButton;
+    QPushButton *exportButton;
     QStandardItemModel *resultTable;
     QTreeView *resultTableView;
     QStandardItemModel *delayTable;

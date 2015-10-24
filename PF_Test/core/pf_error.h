@@ -2,6 +2,7 @@
 #define pf_error_H
 
 #include <QObject>
+#include <QTime>
 
 class pf_error : public QObject
 {
@@ -32,12 +33,15 @@ public slots:
 public: //methods
     error_t get_err_no(void) const;
     const QString& get_txt(void);
+    const QTime get_timestamp();
+    const QString get_timestamp_str();
 
 private: //methods
     const QString& err2txt(pf_error::error_t);
 
 private: //members
     error_t err_no;
+    QTime time;
 };
 
 #endif // pf_error_H

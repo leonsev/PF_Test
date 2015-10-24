@@ -45,9 +45,11 @@
 #include <QCheckBox>
 #include <QtSerialPort/QSerialPort>
 #include <QTime>
+#include <QDir>
 
 #include <QtSerialPort/QSerialPortInfo>
 
+#include "dialog.h"
 
 QT_USE_NAMESPACE
 
@@ -85,11 +87,12 @@ Dialog::Dialog(QWidget *parent)
     , refreshButton(new QPushButton(tr("Refresh")))
     , addButton(new QPushButton(tr("Add cyclic")))
     , resetButton(new QPushButton(tr("Reset cyclic")))
-    , resultTable(new QStandardItemModel(max_reply,5))
+    , exportButton(new QPushButton(tr("Export CSV")))
+    , resultTable(new QStandardItemModel(0,5))
     , resultTableView(new QTreeView())
-    , delayTable(new QStandardItemModel(1,2))
+    , delayTable(new QStandardItemModel(0,2))
     , delayTableView(new QTreeView())
-    , errorTable(new QStandardItemModel(6,4))
+    , errorTable(new QStandardItemModel(0,4))
     , errorTableView(new QTreeView())
     , resultBox(new QGroupBox(tr("Result")))
     , controlBox(new QGroupBox(tr("Control")))
@@ -145,7 +148,8 @@ Dialog::Dialog(QWidget *parent)
     controlLayout->addWidget(runButton, 3, 1);
     controlLayout->addWidget(sendButton, 0, 5);
     controlLayout->addWidget(cyclicButton, 0, 6);
-    controlLayout->addWidget(refreshButton, 7, 6);
+    controlLayout->addWidget(exportButton, 7, 6);
+    controlLayout->addWidget(refreshButton, 7, 5);
     controlLayout->addWidget(addButton, 1, 5);
     controlLayout->addWidget(resetButton, 1, 6);
     controlLayout->addWidget(requestLabel, 0, 2);
@@ -194,6 +198,8 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(cyclicprocessing()));
     connect(refreshButton, SIGNAL(clicked()),
             this, SLOT(refreshprocessing()));
+    connect(exportButton, SIGNAL(clicked()),
+            this, SLOT(writeCSV()));
     connect(addButton, SIGNAL(clicked()),
             this, SLOT(addprocessing()));
     connect(resetButton, SIGNAL(clicked()),
@@ -246,6 +252,8 @@ void Dialog::cyclicprocessing()
         cyclicButton->setText("Cyclic");
         emit(pf_adapt.stop_cyclic());
         refreshprocessing();
+        exportButton->setEnabled(true);
+        //refreshButton->setEnabled(true);
 
     }
     else
@@ -255,13 +263,16 @@ void Dialog::cyclicprocessing()
         cyclicButton->setCheckable(true);
         QDebug(QtDebugMsg) << "Start cyclic";
         emit(pf_adapt.start_cyclic());
+        exportButton->setEnabled(false);
+        //refreshButton->setEnabled(false);
     }
 }
 
 void Dialog::refreshprocessing()
 {
     showDelays();
-    showReplies(*resultTable, max_reply, false);
+    replies2StdIdtemModel(*resultTable, max_reply);
+    writeCSV();
 }
 
 void Dialog::addprocessing()
@@ -308,7 +319,7 @@ void Dialog::error(pf_error err)
 
     errorTable->insertRow(error_counter);
     errorTable->setData(errorTable->index(error_counter, 0), QString::number(error_counter+1));
-    errorTable->setData(errorTable->index(error_counter, 1), QString::number(QTime::currentTime().msec()));
+    errorTable->setData(errorTable->index(error_counter, 1), err.get_timestamp_str());
     errorTable->setData(errorTable->index(error_counter, 2), QString::number(err.get_err_no()));
     errorTable->setData(errorTable->index(error_counter, 3), err.get_txt());
     error_counter++;
@@ -323,23 +334,25 @@ void Dialog::setControlsEnabled(bool enable)
     //waitResponseSpinBox->setEnabled(enable);
 }
 
-void Dialog::showReplies(QStandardItemModel& table, quint32 replies_to_show, bool insert)
+void Dialog::replies2StdIdtemModel(QStandardItemModel& table, quint32 replies_to_show)
 {
     quint32 i = 0;
     quint32 size = replies.size();
 
-    //QDebug(QtDebugMsg) << "showReplies: " << size << (replies.end() == replies.begin());
+    if(replies_to_show > size || replies_to_show == 0) {replies_to_show = size;}
+
+    table.setRowCount(replies_to_show);
 
     for (QList<pf_reply>::iterator it = replies.end()-1; i < replies_to_show && it >= replies.begin();i++ ,it--)
     {
         //QDebug(QtDebugMsg) << "showReplies 2: " << i;
 
-        if(insert){resultTable->insertRow(i);}
-        resultTable->setData(table.index(i, 0), QString::number(size - i));
-        resultTable->setData(table.index(i, 1), it[0].get_timestamp().toString() + QString(" ") + QString::number(it[0].get_timestamp().msec()));
-        resultTable->setData(table.index(i, 2), it[0].get_request().toHex());
-        resultTable->setData(table.index(i, 3), it[0].get_reply().toHex());
-        resultTable->setData(table.index(i, 4), QString::number(it[0].get_delay()));
+        //if(insert){resultTable->insertRow(row);}
+        table.setData(table.index(i, 0), QString::number(size - i));
+        table.setData(table.index(i, 1), it[0].get_timestamp_str());
+        table.setData(table.index(i, 2), it[0].get_request().toHex());
+        table.setData(table.index(i, 3), it[0].get_reply().toHex());
+        table.setData(table.index(i, 4), QString::number(it[0].get_delay()));
     }
 }
 
@@ -358,3 +371,62 @@ void Dialog::showDelays()
         delayTable->setData(delayTable->index(i, 1), QString::number(delays[i]));
     }
 }
+
+void Dialog::setSCVBlock(QtCSV::StringData& strData, const QStandardItemModel& resTable, const QString& tableName)
+{
+    strData.addRow(tableName);
+    // prepare data that you want to save to csv-file
+    QStringList strListHeader;
+    for (int coll = 0; coll < resTable.columnCount(); coll++)
+    {
+        strListHeader << resTable.headerData(coll, Qt::Horizontal).toString();
+    }
+    strData.addRow(strListHeader);
+    strListHeader.clear();
+    for (int row = 0; row < resTable.rowCount(); row++)
+    {
+        for (int coll = 0; coll < resTable.columnCount(); coll++)
+        {
+            QStandardItem* item = resTable.item(row, coll);
+            if(NULL != item)
+            {
+                strListHeader << item->text();
+
+            }
+            else
+            {
+                QDebug(QtWarningMsg) << "Item not set " << tableName << ":" << row << ":" << coll;
+            }
+        }
+        strData.addRow(strListHeader);
+        strListHeader.clear();
+    }
+
+    strData.addEmptyRow();
+    strData.addEmptyRow();
+}
+
+void Dialog::writeCSV()
+{
+    QtCSV::StringData strData;
+
+    setSCVBlock(strData, *errorTable, QString("Errors"));
+    setSCVBlock(strData, *delayTable, QString("Delay distribution"));
+
+    QStandardItemModel replTab(0,5);
+    //TODO remove copypast
+    replTab.setHeaderData(0, Qt::Horizontal, QObject::tr("#"));
+    replTab.setHeaderData(1, Qt::Horizontal, QObject::tr("Time"));
+    replTab.setHeaderData(2, Qt::Horizontal, QObject::tr("Request"));
+    replTab.setHeaderData(3, Qt::Horizontal, QObject::tr("Reply"));
+    replTab.setHeaderData(4, Qt::Horizontal, QObject::tr("Delay"));
+    replies2StdIdtemModel(replTab, 0);
+    setSCVBlock(strData, replTab, QString("Requests log"));
+
+
+
+    // write to file
+    QString filePath = QDir::currentPath() + "/PF_Test.csv";
+    QtCSV::Writer::write(filePath, strData);
+}
+
