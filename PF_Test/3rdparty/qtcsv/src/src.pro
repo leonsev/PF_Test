@@ -4,6 +4,7 @@ TARGET = qtcsv
 TEMPLATE = lib
 
 CONFIG += warn_on
+CONFIG += static
 QMAKE_CXXFLAGS_WARN_ON += -Werror -Wformat=2 -Wuninitialized -Winit-self \
         -Wmissing-include-dirs -Wswitch-enum -Wundef -Wpointer-arith \
         -Wdisabled-optimization -Wcast-align -Wcast-qual

@@ -40,6 +40,11 @@
 #include <QGroupBox>
 #include <QTreeView>
 #include <QVector>
+#include <QList>
+#include <QStringList>
+#include <QDir>
+#include <QDebug>
+
 
 #include "pf_adaptor.h"
 #include "pf_error.h"

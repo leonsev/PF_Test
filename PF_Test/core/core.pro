@@ -7,11 +7,17 @@ TEMPLATE = app
 
 DEFINES += QT_NO_DEBUG_OUTPUT
 DEFINES += QT_NO_DEBUG
+DEFINES += QTCSV_LIBRARY
 
 CONFIG+= static
 
-INCLUDEPATH += \
-    ../3rdparty/qtcsv/src/include
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/qtcsv/src/release/ -lqtcsv
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/qtcsv/src/debug/ -lqtcsv
+else:unix: LIBS += -L$$OUT_PWD/../3rdparty/qtcsv/src/ -lqtcsv
+
+INCLUDEPATH += $$PWD/../3rdparty/qtcsv/src \
+                $$PWD/../3rdparty/qtcsv/src/include
+DEPENDPATH += $$PWD/../3rdparty/qtcsv/src
 
 
 HEADERS += \
@@ -44,11 +50,8 @@ SOURCES += \
     pf_reply.cpp \
     pf_controller.cpp
 
-LIBS += \
-    -L./../3rdparty/qtcsv/src/debug \
-    -L./../3rdparty/qtcsv/src/release \
-    -lqtcsv
 
 
 # Use .depends to specify that a project depends on another.
 core.depends = qtcsv
+

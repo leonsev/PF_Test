@@ -46,10 +46,17 @@
 #include <QtSerialPort/QSerialPort>
 #include <QTime>
 #include <QDir>
+#include <QVariant>
+#include <QList>
+#include <QStringList>
 
 #include <QtSerialPort/QSerialPortInfo>
 
 #include "dialog.h"
+#include "variantdata.h"
+#include "reader.h"
+#include "writer.h"
+#include "stringdata.h"
 
 QT_USE_NAMESPACE
 
