@@ -4,7 +4,7 @@
 
 quint8 pf_crc::get(const QByteArray &data)
 {
-    quint8 crc = (data[0] == START_CHAR) ? START_CHAR : 0;
+    quint8 crc = ((unsigned char)data[0] == START_CHAR) ? START_CHAR : 0;
     for (size_t it = 0; it < data.size(); it++)
     {
         crc^=data[it];
