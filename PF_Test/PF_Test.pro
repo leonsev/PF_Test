@@ -2,7 +2,7 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     3rdparty/qtcsv \
-    integrity \
+    pf_integrity \
     pf_core \
     pf_performance
 
