@@ -17,15 +17,15 @@ public:
     void add_suit(pf_testsuit_p suit_);
 signals:
     complete(complete_t);
-    error_result(pf_errresult::pointer_t);
+    error_result(QString , pf_errresult::pointer_t);
 
 public slots:
     void start();
     void stop();
-    void restart();
 
 private:
-    QList<pf_testsuit_p> suit_list;
+    //QList<pf_testsuit_p> suit_list;
+    pf_testsuit_p active_suit;
 };
 
 #endif // PF_TESTCONTROLLER_H

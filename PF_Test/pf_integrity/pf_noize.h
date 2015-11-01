@@ -24,9 +24,11 @@ private:
 signals:
 
 public slots:
-    QByteArray apply_and(const QByteArray& message_);
+    QByteArray apply_or(const QByteArray& message_);
+    QByteArray apply_and_not(const QByteArray &message_);
+    const QByteArray& get(void){return noize;}
 
-private:
+public:
     const QByteArray noize;
 };
 
@@ -37,6 +39,8 @@ public:
     //explicit pf_noize(QObject *parent = 0);
     pf_noize(const QByteArray& mask_pattern_);
     pf_noize(const pf_noize&);
+
+    const QByteArray& getMask_pattern() const;
 
 signals:
 

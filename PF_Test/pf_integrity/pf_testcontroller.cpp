@@ -12,35 +12,34 @@ pf_testcontroller::~pf_testcontroller()
 
 void pf_testcontroller::add_suit(pf_testsuit_p suit_)
 {
-    suit_list.append(suit_);
+    if(!active_suit.isNull())
+    {
+        disconnect(active_suit, SIGNAL(error_result(QString, pf_errresult::pointer_t)), this, SIGNAL(error_result(QString,pf_errresult::pointer_t)));
+        disconnect(active_suit, SIGNAL(complete(complete_t)), this, SIGNAL(complete(complete_t)));
 
-    qRegisterMetaType<pf_errresult::pointer_t>("pf_errresult::pointer_t");
+        stop();
+        active_suit.clear();
+    }
+    active_suit = suit_;
 
-    connect(suit_list.last(), SIGNAL(error_result(pf_errresult::pointer_t)), this, SIGNAL(error_result(pf_errresult::pointer_t)), Qt::QueuedConnection);
-    connect(suit_list.last(), SIGNAL(complete(complete_t)), this, SIGNAL(complete(complete_t)), Qt::QueuedConnection);
+    //qRegisterMetaType<pf_errresult::pointer_t>("pf_errresult::pointer_t");
+
+    connect(active_suit, SIGNAL(error_result(QString, pf_errresult::pointer_t)), this, SIGNAL(error_result(QString,pf_errresult::pointer_t)), Qt::QueuedConnection);
+    connect(active_suit, SIGNAL(complete(complete_t)), this, SIGNAL(complete(complete_t)), Qt::QueuedConnection);
 }
 
 void pf_testcontroller::start()
 {
-    for(QList<pf_testsuit_p>::iterator it = suit_list.begin(); it < suit_list.end(); it++)
-    {
-        it[0]->start();
-    }
+    active_suit->start();
 }
 
 void pf_testcontroller::stop()
 {
-    for(QList<pf_testsuit_p>::iterator it = suit_list.begin(); it < suit_list.end(); it++)
+    if(!active_suit.isNull())
     {
-        it[0]->quit();
+        active_suit->terminate();
+        active_suit->wait();
     }
 }
 
-void pf_testcontroller::restart()
-{
-    for(QList<pf_testsuit_p>::iterator it = suit_list.begin(); it < suit_list.end(); it++)
-    {
-        it[0]->restart();
-    }
-}
 

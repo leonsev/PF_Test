@@ -10,20 +10,36 @@ pf_noize_ins::pf_noize_ins(QByteArray &noize_) : noize(noize_)
 
 }
 
-QByteArray pf_noize_ins::apply_and(const QByteArray &message_)
+QByteArray pf_noize_ins::apply_or(const QByteArray &message_)
 {
     QByteArray corrupted_message(message_);
     if(message_.size() == noize.size())
     {
         for(int n = 0; n < message_.size(); n++)
         {
-            corrupted_message[n] = corrupted_message[n] & noize[n];
+            corrupted_message[n] = corrupted_message[n] | noize[n];
         }
         return corrupted_message;
     }
     QDebug(QtWarningMsg) << "Message and noize different size:" << message_ << ":" << noize.size();
     return QByteArray();
 }
+
+QByteArray pf_noize_ins::apply_and_not(const QByteArray &message_)
+{
+    QByteArray corrupted_message(message_);
+    if(message_.size() == noize.size())
+    {
+        for(int n = 0; n < message_.size(); n++)
+        {
+            corrupted_message[n] = corrupted_message[n] & ~noize[n];
+        }
+        return corrupted_message;
+    }
+    QDebug(QtWarningMsg) << "Message and noize different size:" << message_ << ":" << noize.size();
+    return QByteArray();
+}
+
 
 //pf_noize::pf_noize(QObject *parent) : QObject(parent)
 //{
@@ -49,13 +65,18 @@ QByteArray& pf_noize::generate(QByteArray& noize_)
     return noize_;
 }
 
+const QByteArray &pf_noize::getMask_pattern() const
+{
+    return mask_pattern;
+}
+
 noize_ins_p pf_noize::get()
 {
     QByteArray noize_(mask_pattern.size(), Qt::Uninitialized);
 
     generate(noize_);
 
-    QDebug(QtDebugMsg) << "Generate noize:" << noize_;
+    //QDebug(QtDebugMsg) << "Generate noize:" << noize_;
 
     return new pf_noize_ins(noize_);
 }
