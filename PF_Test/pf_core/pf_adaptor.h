@@ -24,7 +24,7 @@ public:
 
 signals:
     /* in */
-    void request(QByteArray, bool reply);
+    void request(QByteArray, bool reply, quint32 pause);
     void open_serial(QString, QString, qint32 /*baud_rate*/);    
     void close_serial(void);
 

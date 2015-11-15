@@ -300,7 +300,7 @@ void Dialog::sendprocessing()
     QByteArray data(QByteArray::fromHex(requestLineEdit->text().toLocal8Bit()));
     //QDebug(QtDebugMsg) << "Executing Dialog::sendprocessing slot";
 
-    emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState()));
+    emit(pf_adapt.request(data, Qt::Checked == requestChBox->checkState(), static_cast<quint32>(pauseLineEdit->text().toInt())));
 }
 
 void Dialog::reply(pf_reply reply_)

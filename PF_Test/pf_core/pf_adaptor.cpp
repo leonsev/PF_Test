@@ -14,8 +14,8 @@ pf_adaptor::pf_adaptor(QObject *parent) : QObject(parent),
 //    connect(this, SIGNAL(request(QByteArray, bool)),
 //            tx_p, SLOT(transmitt(QByteArray, bool)),  Qt::BlockingQueuedConnection);
 
-    connect(this, SIGNAL(request(QByteArray, bool)),
-            controller_p, SLOT(single_request(QByteArray, bool)),  Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(request(QByteArray, bool, quint32)),
+            controller_p, SLOT(single_request(QByteArray, bool, quint32)),  Qt::BlockingQueuedConnection);
 
     connect(controller_p, SIGNAL(transmitt(QByteArray, bool)),
             tx_p, SLOT(transmitt(QByteArray, bool)),  Qt::BlockingQueuedConnection);
